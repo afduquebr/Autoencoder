@@ -27,17 +27,20 @@ from test import test
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
-# path = "../GAN-AE/clustering-lhco/data"
-path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
+# data = "../GAN-AE/clustering-lhco/data"
+data = "/AtlasDisk/user/duquebran/clustering-lhco/data"
+
+# code = ""
+code = "/AtlasDisk/home2/duquebran/Autoencoder/"
 
 scale = "minmax" 
 # scale = "standard"
 
-bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
-sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
-sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
+bkg = pd.read_hdf(f"{data}/RnD_2j_scalars_bkg.h5")
+sig1 = pd.read_hdf(f"{data}/RnD_2j_scalars_sig.h5")
+sig2 = pd.read_hdf(f"{data}/RnD2_2j_scalars_sig.h5")
 
-selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv(f"{code}dijet-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -156,7 +159,7 @@ for epoch in range(N_epochs) :
     sig2Loss.append(test(model, testLoader_sig2, epoch))
 
 # Save model
-torch.save(model.state_dict(), f"models/model_parameters_{scale}.pth")
+torch.save(model.state_dict(), f"{code}models/model_parameters_{scale}.pth")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -167,4 +170,4 @@ axes.scatter(range(N_epochs), sig2Loss, marker="o", s=8, label='Signal 2 testing
 axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
-fig.save(f"figs/training/loss_{scale}.png")
+fig.save(f"{code}figs/training/loss_{scale}.png")
