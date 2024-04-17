@@ -22,7 +22,6 @@ from torch.utils.data import DataLoader, TensorDataset
 import torchvision
 
 from autoencoder import AutoEncoder, train, test
-from test import test
 
 #######################################################################################################
 ####################################### Data Initialization ###########################################
