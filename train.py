@@ -148,4 +148,4 @@ axes.scatter(range(N_epochs), sig2Loss, marker="o", s=8, label='Signal 2 testing
 axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
-fig.save(f"figs/training/loss_{scale}.png")
+fig.savefig(f"figs/training/loss_{scale}.png")
