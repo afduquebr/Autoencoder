@@ -21,7 +21,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision
 
-from autoencoder import AutoEncoder
+from autoencoder import AutoEncoder, train, test
 from test import test
 
 #######################################################################################################
@@ -120,24 +120,6 @@ loss_function = nn.MSELoss()
 
 # Optimizer
 optimizer = optim.Adam(model.parameters(), lr = learning_rate)
-
-#######################################################################################################
-########################################## Model Training #############################################
-
-def train(model, data_loader, opt, epoch):
-    model.train()
-    for i, (features, _) in enumerate(data_loader):     
-        prediction = model(features)
-        loss = loss_function(prediction, features)
-        opt.zero_grad()
-        loss.backward()
-        opt.step()
-
-        # print statistics
-        if i % 100 == 99:    
-            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Training loss: %.3f'% (loss.item()))
-    return loss.item()
 
 #######################################################################################################
 ######################################## Training Analysis ############################################

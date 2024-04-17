@@ -21,7 +21,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision
 
-from autoencoder import AutoEncoder
+from autoencoder import AutoEncoder, loss
 
 #######################################################################################################
 ####################################### Data Initialization ###########################################
@@ -115,24 +115,6 @@ testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, 
 
 # Loss function
 loss_function = nn.MSELoss()
-
-#######################################################################################################
-##################################### Model Testing and Loss ##########################################
-
-def test(model, data_loader, epoch):
-    model.eval()
-    for i, (features, _) in enumerate(data_loader):     
-        prediction = model(features)
-        loss = loss_function(prediction, features)
-        # print statistics
-        if i % 100 == 99:    
-            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Testing loss: %.3f'% (loss.item()))
-    return loss.item()
-
-# Define Reconstruction Error function
-def loss(dataset, prediction):
-    return torch.pow(dataset - prediction, 2)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################

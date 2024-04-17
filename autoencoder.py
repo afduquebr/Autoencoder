@@ -69,3 +69,39 @@ class AutoEncoder(nn.Module):
         x = self.decode(x) 
         self.init_decoder_weights()
         return x
+
+#######################################################################################################
+########################################## Model Training #############################################
+
+def train(model, data_loader, opt, epoch):
+    model.train()
+    for i, (features, _) in enumerate(data_loader):     
+        prediction = model(features)
+        loss = loss_function(prediction, features)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        # print statistics
+        if i % 100 == 99:    
+            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
+            print('Training loss: %.3f'% (loss.item()))
+    return loss.item()
+
+#######################################################################################################
+##################################### Model Testing and Loss ##########################################
+
+def test(model, data_loader, epoch):
+    model.eval()
+    for i, (features, _) in enumerate(data_loader):     
+        prediction = model(features)
+        loss = loss_function(prediction, features)
+        # print statistics
+        if i % 100 == 99:    
+            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
+            print('Testing loss: %.3f'% (loss.item()))
+    return loss.item()
+
+# Define Reconstruction Error function
+def loss(dataset, prediction):
+    return torch.pow(dataset - prediction, 2)
