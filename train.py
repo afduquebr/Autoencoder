@@ -131,13 +131,13 @@ sig2Loss = []
 # Run training and store validation through training
 for epoch in range(N_epochs) :
     print("Training")
-    trainLoss.append(train(model, trainLoader, optimizer, epoch))
+    trainLoss.append(train(model, trainLoader, loss_function, optimizer, epoch))
     print("Validating")
-    testLoss.append(test(model, testLoader_bkg, epoch))
+    testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
     print("Testing Signal 1")
-    sig1Loss.append(test(model, testLoader_sig1, epoch))
+    sig1Loss.append(test(model, testLoader_sig1, loss_function, epoch))
     print("Testing Signal 2")
-    sig2Loss.append(test(model, testLoader_sig2, epoch))
+    sig2Loss.append(test(model, testLoader_sig2, loss_function, epoch))
 
 # Save model
 torch.save(model.state_dict(), f"{code}models/model_parameters_{scale}.pth")

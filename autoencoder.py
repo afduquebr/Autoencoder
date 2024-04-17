@@ -73,7 +73,7 @@ class AutoEncoder(nn.Module):
 #######################################################################################################
 ########################################## Model Training #############################################
 
-def train(model, data_loader, opt, epoch):
+def train(model, data_loader, loss_function, opt, epoch):
     model.train()
     for i, (features, _) in enumerate(data_loader):     
         prediction = model(features)
@@ -91,7 +91,7 @@ def train(model, data_loader, opt, epoch):
 #######################################################################################################
 ##################################### Model Testing and Loss ##########################################
 
-def test(model, data_loader, epoch):
+def test(model, data_loader, loss_function, epoch):
     model.eval()
     for i, (features, _) in enumerate(data_loader):     
         prediction = model(features)
