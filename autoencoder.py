@@ -29,18 +29,18 @@ class AutoEncoder(nn.Module):
         # layer followed by Relu activation function
         # 42 ==> 14
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, input_dim * 2),
+            nn.Linear(input_dim, input_dim // 2),
             nn.ReLU(),
-            nn.Linear(input_dim * 2, input_dim // 3)
+            nn.Linear(input_dim // 2, input_dim // 3)
         )
         
         # Building an linear decoder with Linear
         # layer followed by Relu activation function
         # 14 ==> 42
         self.decoder = nn.Sequential(
-            nn.Linear(input_dim // 3, input_dim * 2),
+            nn.Linear(input_dim // 3, input_dim // 2),
             nn.ReLU(),
-            nn.Linear(input_dim * 2, input_dim),
+            nn.Linear(input_dim // 2, input_dim),
             nn.ReLU()
         )
 
