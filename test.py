@@ -29,8 +29,8 @@ from autoencoder import AutoEncoder, loss
 # path = "../GAN-AE/clustering-lhco/data"
 path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
 
-scale = "minmax"
-# scale = "standard"
+# scale = "minmax"
+scale = "standard"
 
 bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
 sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
