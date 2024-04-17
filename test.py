@@ -26,20 +26,17 @@ from autoencoder import AutoEncoder, loss
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
-# data = "../GAN-AE/clustering-lhco/data"
-data = "/AtlasDisk/user/duquebran/clustering-lhco/data"
-
-# code = ""
-code = "/AtlasDisk/home2/duquebran/Autoencoder/"
+# path = "../GAN-AE/clustering-lhco/data"
+path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
 
 scale = "minmax" 
 # scale = "standard"
 
-bkg = pd.read_hdf(f"{data}/RnD_2j_scalars_bkg.h5")
-sig1 = pd.read_hdf(f"{data}/RnD_2j_scalars_sig.h5")
-sig2 = pd.read_hdf(f"{data}/RnD2_2j_scalars_sig.h5")
+bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
+sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
+sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
-selection = pd.read_csv(f"{code}dijet-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv(f"dijet-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -121,7 +118,7 @@ loss_function = nn.MSELoss()
 
 # Load Model
 model = AutoEncoder(input_dim=input_dim)
-model.load_state_dict(torch.load(f"{code}models/model_parameters_minmax.pth"))
+model.load_state_dict(torch.load(f"models/model_parameters_minmax.pth"))
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
@@ -159,7 +156,7 @@ axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
 axes.set_xlim(0, 0.002)
 axes.legend(loc='upper right')
-fig.save(f"{code}figs/testing/reconstruction_error_{scale}.png")
+fig.save(f"figs/testing/reconstruction_error_{scale}.png")
 
 ############################################ ROC Curve ##############################################
 
@@ -190,7 +187,7 @@ axes.set_xlabel('False Positive Rate')
 axes.set_ylabel('True Positive Rate')
 axes.set_title('Receiver Operating Characteristic (ROC) Curve')
 axes.legend(loc="lower right")
-fig.save(f"{code}figs/testing/ROC_{scale}.png")
+fig.save(f"figs/testing/ROC_{scale}.png")
 
 
 
@@ -232,4 +229,4 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2000, 6000)
 axes.legend()
-fig.save(f"{code}figs/testing/mass_dist_{scale}.png")
+fig.save(f"figs/testing/mass_dist_{scale}.png")

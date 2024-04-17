@@ -9,8 +9,11 @@ conda_env="/AtlasDisk/home2/duquebran/Autoencoder/.venv"
 # Activate the Conda environment
 conda activate $conda_env
 
+# Go to directory
+cd /AtlasDisk/home2/duquebran/Autoencoder/
+
 # Run your Python script
-python /AtlasDisk/home2/duquebran/Autoencoder/train.py
+python train.py
 
 # Deactivate the Conda environment
 conda deactivate
