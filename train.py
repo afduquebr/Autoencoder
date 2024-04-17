@@ -56,6 +56,7 @@ mjj_sig2 = sig2[mass].values
 
 #######################################################################################################
 ############################################# Reweighting #############################################
+
 Hc,Hb = np.histogram(mjj_bkg,bins=500)
 weights = np.array(Hc,dtype=float)
 weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
