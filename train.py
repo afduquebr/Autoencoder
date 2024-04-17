@@ -27,8 +27,8 @@ from test import test
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
-path = "../GAN-AE/clustering-lhco/data"
-path = "../GAN-AE/clustering-lhco/data"
+# path = "../GAN-AE/clustering-lhco/data"
+path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
 
 scale = "minmax" 
 # scale = "standard"

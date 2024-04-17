@@ -26,7 +26,8 @@ from autoencoder import AutoEncoder
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
-path = "../GAN-AE/clustering-lhco/data"
+# path = "../GAN-AE/clustering-lhco/data"
+path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
 
 scale = "minmax" 
 # scale = "standard"
@@ -54,6 +55,7 @@ mjj_sig2 = sig2[mass].values
 
 #######################################################################################################
 ############################################# Reweighting #############################################
+
 Hc,Hb = np.histogram(mjj_bkg,bins=500)
 weights = np.array(Hc,dtype=float)
 weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
