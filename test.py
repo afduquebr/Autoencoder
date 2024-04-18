@@ -149,12 +149,12 @@ loss_sig2_total = loss_sig2.sum(axis=1) / 42
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0, 0.002), density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0, 0.002), density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0, 0.002), density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0, 0.002)
+# axes.set_xlim(0, 0.002)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{scale}.png")
 
@@ -222,11 +222,11 @@ selected_values = loss_bkg_all_total[cumulative_sum <= threshold]
 
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([bkg.mj1j2], nbins, range=(2000, 6000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([bkg.mj1j2[cumulative_sum <= 0.85 * total_sum]], nbins, range=(2000, 6000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([bkg.mj1j2[cumulative_sum <= 0.5 * total_sum]], nbins, range=(2000, 6000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+axes.hist([bkg.mj1j2[cumulative_sum <= 0.85 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([bkg.mj1j2[cumulative_sum <= 0.5 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
-axes.set_xlim(2000, 6000)
+axes.set_xlim(2700, 5000)
 axes.legend()
 fig.savefig(f"figs/testing/mass_dist_{scale}.png")
