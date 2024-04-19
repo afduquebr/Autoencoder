@@ -121,6 +121,7 @@ for i, column in enumerate(selection):
     axes.set_xlabel(f"{column}")
     axes.set_ylabel("Events")
     axes.set_title(f"Prediction of {column}")
+    axes.set_yscale("log")
     fig.legend()
     fig.savefig(f"{directory}/hist_{column}.png")
     plt.close()
