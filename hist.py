@@ -11,13 +11,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+import os
 
-from autoencoder import AutoEncoder, train, test
+from autoencoder import AutoEncoder
 from main import main, parse_args
 
 #######################################################################################################
@@ -35,7 +32,7 @@ bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
 sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
-selection = pd.read_csv(f"dijet-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -84,67 +81,46 @@ test_bkg = torch.from_numpy(test_bkg.values).float()
 test_sig1 = torch.from_numpy(sig1_scaled.values).float()
 test_sig2 = torch.from_numpy(sig2_scaled.values).float()
 
-trainSet = TensorDataset(train_bkg, train_bkg)
-testSet_bkg = TensorDataset(test_bkg, test_bkg)
-testSet_sig1 = TensorDataset(test_sig1, test_sig1)
-testSet_sig2 = TensorDataset(test_sig2, test_sig2)
-
-
 #######################################################################################################
-######################################### Model Initlization ##########################################
+########################################## Histogram Analysis ############################################
 
 # Latent space dimension (embedding)
 input_dim = selection.size
 
-# Model creation
+# Load Model
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim)
+model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth"))
 
-# Hyperparameters
-N_epochs = 100 #100
-batch_size = 2048
-learning_rate = 0.0002
+# Predictions
+with torch.no_grad(): # no need to compute gradients here
+    predict_bkg = model(test_bkg)
+    predict_sig1 = model(test_sig1)
+    predict_sig2 = model(test_sig2)
 
-# dataloaders
-trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_bkg = DataLoader(testSet_bkg, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
-
-# Loss function
-loss_function = nn.MSELoss()
-
-# Optimizer
-optimizer = optim.Adam(model.parameters(), lr = learning_rate)
+predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.numpy()), columns=sig1[selection].columns)
+predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.numpy()), columns=sig1[selection].columns)
+predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.numpy()), columns=sig1[selection].columns)
 
 #######################################################################################################
-######################################## Training Analysis ############################################
+############################################# Histograms ##############################################
 
-trainLoss = []
-testLoss = []
-sig1Loss = []
-sig2Loss = []
+directory = f"figs/histograms/{scale}/mid_{mid_dim}_lat_{latent_dim}"
 
-# Run training and store validation through training
-for epoch in range(N_epochs) :
-    print("Training")
-    trainLoss.append(train(model, trainLoader, loss_function, optimizer, epoch))
-    print("Validating")
-    testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
-    print("Testing Signal 1")
-    sig1Loss.append(test(model, testLoader_sig1, loss_function, epoch))
-    print("Testing Signal 2")
-    sig2Loss.append(test(model, testLoader_sig2, loss_function, epoch))
+if not os.path.exists(directory):
+    os.makedirs(directory)
 
-# Save model
-torch.save(model.state_dict(), f"models/model_parameters_{scale}.pth")
-
-# Create Loss per Epochs
-fig, axes = plt.subplots(figsize=(8,6))
-axes.scatter(range(N_epochs), trainLoss, marker="*", s=10, label='Training loss function')
-axes.scatter(range(N_epochs), testLoss, marker="^", s=8, label='Background testing loss function')
-axes.scatter(range(N_epochs), sig1Loss, marker="o", s=8, label='Signal 1 testing loss function')
-axes.scatter(range(N_epochs), sig2Loss, marker="o", s=8, label='Signal 2 testing loss function')
-axes.set_xlabel('N epochs',fontsize=10)
-axes.set_ylabel('Loss',fontsize=10)
-axes.legend(loc='upper right',fontsize=10)
-fig.savefig(f"figs/training/loss_{scale}_{mid_dim}_{latent_dim}.png")
+nbins = 20
+for i, column in enumerate(selection):
+    fig, axes = plt.subplots(figsize=(8,6))
+    axes.hist([test_bkg.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
+    axes.hist([predict_bkg.numpy()[:,i]], nbins, density=0, histtype='bar', label=['BKG prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig1.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=1)
+    axes.hist([predict_sig1.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1 prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig2.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=1)
+    axes.hist([predict_sig2.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2 prediction'], stacked=True, alpha=0.3)
+    axes.set_xlabel(f"{column}")
+    axes.set_ylabel("Events")
+    axes.set_title(f"Prediction of {column}")
+    fig.legend()
+    fig.savefig(f"{directory}/hist_{column}.png")
+    plt.close()

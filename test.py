@@ -11,26 +11,23 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
-from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_curve, auc
-from sklearn.model_selection import cross_val_predict
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import torchvision
 
 from autoencoder import AutoEncoder, loss
+from main import main, parse_args
 
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
-# path = "../GAN-AE/clustering-lhco/data"
-path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
+path, scale, mid_dim, latent_dim = parse_args()
+main()
 
-# scale = "minmax"
-scale = "standard"
+if path == "local":
+    path = "../GAN-AE/clustering-lhco/data"
+elif path == "server": 
+    path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
 
 bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
 sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
@@ -71,7 +68,7 @@ weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
 
 if scale == "minmax":
     scaler = MinMaxScaler()
-else:
+elif scale == "standard":
     scaler = StandardScaler()
 
 bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection).mul(weights_bkg, axis = 0)
@@ -85,40 +82,15 @@ test_bkg = torch.from_numpy(test_bkg.values).float()
 test_sig1 = torch.from_numpy(sig1_scaled.values).float()
 test_sig2 = torch.from_numpy(sig2_scaled.values).float()
 
-trainSet = TensorDataset(train_bkg, train_bkg)
-testSet_bkg = TensorDataset(test_bkg, test_bkg)
-testSet_sig1 = TensorDataset(test_sig1, test_sig1)
-testSet_sig2 = TensorDataset(test_sig2, test_sig2)
-
 #######################################################################################################
-######################################### Model Initlization ##########################################
+########################################## Testing Analysis ############################################
 
 # Latent space dimension (embedding)
 input_dim = selection.size
 
-# Model creation
-model = AutoEncoder(input_dim=input_dim)
-
-# Hyperparameters
-N_epochs = 100 #100
-batch_size = 2048
-learning_rate = 0.0002
-
-# dataloaders
-trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_bkg = DataLoader(testSet_bkg, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, num_workers=0)
-testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
-
-# Loss function
-loss_function = nn.MSELoss()
-
-#######################################################################################################
-########################################## Testing Analysis ############################################
-
 # Load Model
-model = AutoEncoder(input_dim=input_dim)
-model.load_state_dict(torch.load(f"models/model_parameters_{scale}.pth"))
+model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim)
+model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth"))
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
@@ -149,14 +121,14 @@ loss_sig2_total = loss_sig2.sum(axis=1) / 42
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, range=(0, 1), density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0, 1), density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0, 1), density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-# axes.set_xlim(0, 0.002)
+axes.set_xlim(0, 1)
 axes.legend(loc='upper right')
-fig.savefig(f"figs/testing/reconstruction_error_{scale}.png")
+fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ ROC Curve ##############################################
 
@@ -187,7 +159,7 @@ axes.set_xlabel('False Positive Rate')
 axes.set_ylabel('True Positive Rate')
 axes.set_title('Receiver Operating Characteristic (ROC) Curve')
 axes.legend(loc="lower right")
-fig.savefig(f"figs/testing/ROC_{scale}.png")
+fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 
 
@@ -229,4 +201,4 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
 axes.legend()
-fig.savefig(f"figs/testing/mass_dist_{scale}.png")
+fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
