@@ -58,7 +58,7 @@ weights = np.array(Hc,dtype=float)
 weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
 weights[weights == 0.0] = 1.0
 weights = np.append(weights, weights[-1])
-weights *= 1000.0 # To avoid very small weights
+# weights *= 1000.0 # To avoid very small weights
 weights_bkg = weights[np.searchsorted(Hb, mjj_bkg)]
 weights_sig1 = weights[np.searchsorted(Hb, mjj_sig1)]
 weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
