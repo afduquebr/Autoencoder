@@ -71,9 +71,9 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection).mul(weights_bkg, axis = 0)
-sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection).mul(weights_sig1, axis = 0)
-sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection).mul(weights_sig2, axis = 0)
+bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection)
+sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection)
+sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection)
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -81,6 +81,7 @@ train_bkg = torch.from_numpy(train_bkg.values).float()
 test_bkg = torch.from_numpy(test_bkg.values).float()
 test_sig1 = torch.from_numpy(sig1_scaled.values).float()
 test_sig2 = torch.from_numpy(sig2_scaled.values).float()
+weights_bkg = torch.from_numpy(weights_bkg).float()
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
@@ -202,3 +203,20 @@ axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
 axes.legend()
 fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+
+############################################ Normalised Mass Distribution  ##############################################
+
+normalised_mass_bkg = bkg.mj1j2.mul(weights_bkg.numpy(), axis = 0)
+normalised_mass_sig1 = sig1.mj1j2.mul(weights_sig1, axis = 0)
+normalised_mass_sig2 = sig2.mj1j2.mul(weights_sig2, axis = 0)
+
+nbins = 30
+fig, axes = plt.subplots(figsize=(8,6))
+axes.hist([normalised_mass_bkg], nbins, density=1, histtype='step', label=['Bkg'], stacked=True, alpha=1)
+axes.hist([normalised_mass_sig1], nbins, density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.8)
+axes.hist([normalised_mass_sig2], nbins, density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.6)
+axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
+axes.set_ylabel("Events")
+# axes.set_xlim(2700, 5000)
+axes.legend()
+fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")

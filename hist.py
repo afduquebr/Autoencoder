@@ -50,19 +50,6 @@ mjj_sig1 = sig1[mass].values
 mjj_sig2 = sig2[mass].values
 
 #######################################################################################################
-############################################# Reweighting #############################################
-
-Hc,Hb = np.histogram(mjj_bkg,bins=500)
-weights = np.array(Hc,dtype=float)
-weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
-weights[weights == 0.0] = 1.0
-weights = np.append(weights, weights[-1])
-weights *= 1000.0 # To avoid very small weights
-weights_bkg = weights[np.searchsorted(Hb, mjj_bkg)]
-weights_sig1 = weights[np.searchsorted(Hb, mjj_sig1)]
-weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
-
-#######################################################################################################
 ######################################## Data Preprocessing ###########################################
 
 if scale == "minmax":
@@ -70,9 +57,9 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection).mul(weights_bkg, axis = 0)
-sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection).mul(weights_sig1, axis = 0)
-sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection).mul(weights_sig2, axis = 0)
+bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection)
+sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection)
+sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection)
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 

@@ -62,8 +62,8 @@ weights[weights == 0.0] = 1.0
 weights = np.append(weights, weights[-1])
 weights *= 1000.0 # To avoid very small weights
 weights_bkg = weights[np.searchsorted(Hb, mjj_bkg)]
-weights_sig1 = weights[np.searchsorted(Hb, mjj_sig1)]
-weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
+# weights_sig1 = weights[np.searchsorted(Hb, mjj_sig1)]
+# weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
 
 #######################################################################################################
 ######################################## Data Preprocessing ###########################################
@@ -73,9 +73,9 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection).mul(weights_bkg, axis = 0)
-sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection).mul(weights_sig1, axis = 0)
-sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection).mul(weights_sig2, axis = 0)
+bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection)
+sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection)
+sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection)
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -83,8 +83,9 @@ train_bkg = torch.from_numpy(train_bkg.values).float()
 test_bkg = torch.from_numpy(test_bkg.values).float()
 test_sig1 = torch.from_numpy(sig1_scaled.values).float()
 test_sig2 = torch.from_numpy(sig2_scaled.values).float()
+weights_bkg = torch.from_numpy(weights_bkg).float()
 
-trainSet = TensorDataset(train_bkg, train_bkg)
+trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg[(sig1_scaled.shape[0]):, :])
 testSet_bkg = TensorDataset(test_bkg, test_bkg)
 testSet_sig1 = TensorDataset(test_sig1, test_sig1)
 testSet_sig2 = TensorDataset(test_sig2, test_sig2)
