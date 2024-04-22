@@ -8,7 +8,7 @@ if ! source .venv/bin/activate; then
 fi
 
 # Define variables for training
-scale="minmax"
+scale="standard"
 middle_dim="84"
 latent_dim="14" 
 
