@@ -8,8 +8,8 @@ if ! source .venv/bin/activate; then
 fi
 
 # Define variables for training
-scale="minmax"
-middle_dim="84"
+scale="standard"
+middle_dim="21"
 latent_dim="14" 
 
 # Run Testing Python script
