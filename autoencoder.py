@@ -75,7 +75,7 @@ class AutoEncoder(nn.Module):
 
 def train(model, data_loader, loss_function, opt, epoch):
     model.train()
-    for i, (features, _) in enumerate(data_loader):     
+    for i, (features, _, _) in enumerate(data_loader):     
         prediction = model(features)
         loss = loss_function(prediction, features)
         opt.zero_grad()
