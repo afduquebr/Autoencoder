@@ -58,7 +58,7 @@ weights = np.array(Hc,dtype=float)
 weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
 weights[weights == 0.0] = 1.0
 weights = np.append(weights, weights[-1])
-# weights *= 1000.0 # To avoid very small weights
+weights *= 1000.0 # To avoid very small weights
 weights_bkg = weights[np.searchsorted(Hb, mjj_bkg)]
 weights_sig1 = weights[np.searchsorted(Hb, mjj_sig1)]
 weights_sig2 = weights[np.searchsorted(Hb, mjj_sig2)]
@@ -206,17 +206,12 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-normalised_mass_bkg = bkg.mj1j2.mul(weights_bkg.numpy(), axis = 0)
-normalised_mass_sig1 = sig1.mj1j2.mul(weights_sig1, axis = 0)
-normalised_mass_sig2 = sig2.mj1j2.mul(weights_sig2, axis = 0)
-
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([normalised_mass_bkg], nbins, range=(2700, 5000), histtype='step', label=['Bkg'], stacked=True, alpha=1)
-axes.hist([normalised_mass_sig1], nbins, range=(2700, 5000), histtype='step', label=['Signal 1'], stacked=True, alpha=0.8)
-axes.hist([normalised_mass_sig2], nbins, range=(2700, 5000), histtype='step', label=['Signal 2'], stacked=True, alpha=0.6)
-axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
+axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.numpy(), label=['Bkg'], stacked=True, alpha=1)
+axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
+axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel("Events")
-axes.set_xlim(2700, 5000)
 axes.legend()
 fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
