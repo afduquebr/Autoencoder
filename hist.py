@@ -104,12 +104,12 @@ if not os.path.exists(directory):
 nbins = 20
 for i, column in enumerate(selection):
     fig, axes = plt.subplots(figsize=(8,6))
-    axes.hist([test_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
-    axes.hist([predict_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['BKG prediction'], stacked=True, alpha=0.3)
-    axes.hist([test_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=1)
-    axes.hist([predict_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1 prediction'], stacked=True, alpha=0.3)
-    axes.hist([test_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=1)
-    axes.hist([predict_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2 prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
+    axes.hist([predict_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['BKG prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=1)
+    axes.hist([predict_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['Signal 1 prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=1)
+    axes.hist([predict_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='step', label=['Signal 2 prediction'], stacked=True, alpha=0.3)
     axes.set_xlabel(f"{column}")
     axes.set_ylabel("Events")
     axes.set_title(f"Prediction of {column}")
