@@ -212,9 +212,9 @@ normalised_mass_sig2 = sig2.mj1j2.mul(weights_sig2, axis = 0)
 
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([normalised_mass_bkg], nbins, density=1, histtype='step', label=['Bkg'], stacked=True, alpha=1)
-axes.hist([normalised_mass_sig1], nbins, density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.8)
-axes.hist([normalised_mass_sig2], nbins, density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.6)
+axes.hist([normalised_mass_bkg], nbins, histtype='step', label=['Bkg'], stacked=True, alpha=1)
+axes.hist([normalised_mass_sig1], nbins, histtype='step', label=['Signal 1'], stacked=True, alpha=0.8)
+axes.hist([normalised_mass_sig2], nbins, histtype='step', label=['Signal 2'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 # axes.set_xlim(2700, 5000)
