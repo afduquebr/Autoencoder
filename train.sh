@@ -16,7 +16,7 @@ fi
 cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
-scale="minmax"
+scale="standard"
 middle_dim="21"
 latent_dim="14" 
 
