@@ -16,6 +16,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision
 
+####################################### GPU or CPU running ###########################################
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 #######################################################################################################
 ######################################### AutoEncoder Class ###########################################
@@ -76,6 +80,7 @@ class AutoEncoder(nn.Module):
 def train(model, data_loader, loss_function, opt, epoch):
     model.train()
     for i, (features, _, _) in enumerate(data_loader):     
+        features = features.to(device) 
         prediction = model(features)
         loss = loss_function(prediction, features)
         opt.zero_grad()
@@ -94,6 +99,7 @@ def train(model, data_loader, loss_function, opt, epoch):
 def test(model, data_loader, loss_function, epoch):
     model.eval()
     for i, (features, _) in enumerate(data_loader):     
+        features = features.to(device) 
         prediction = model(features)
         loss = loss_function(prediction, features)
         # print statistics

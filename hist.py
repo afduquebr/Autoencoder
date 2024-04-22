@@ -17,6 +17,11 @@ import os
 from autoencoder import AutoEncoder
 from main import main, parse_args
 
+####################################### GPU or CPU running ###########################################
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
@@ -63,10 +68,10 @@ sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), col
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
-train_bkg = torch.from_numpy(train_bkg.values).float()
-test_bkg = torch.from_numpy(test_bkg.values).float()
-test_sig1 = torch.from_numpy(sig1_scaled.values).float()
-test_sig2 = torch.from_numpy(sig2_scaled.values).float()
+train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
+test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
+test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
+test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
 
 #######################################################################################################
 ########################################## Histogram Analysis ############################################
@@ -75,8 +80,8 @@ test_sig2 = torch.from_numpy(sig2_scaled.values).float()
 input_dim = selection.size
 
 # Load Model
-model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim)
-model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth"))
+model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
+model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth", map_location=device))
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
@@ -84,9 +89,9 @@ with torch.no_grad(): # no need to compute gradients here
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
 
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.numpy()), columns=sig1[selection].columns)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.numpy()), columns=sig1[selection].columns)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.numpy()), columns=sig1[selection].columns)
+predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=sig1[selection].columns)
+predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=sig1[selection].columns)
+predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=sig1[selection].columns)
 
 #######################################################################################################
 ############################################# Histograms ##############################################
@@ -99,12 +104,12 @@ if not os.path.exists(directory):
 nbins = 20
 for i, column in enumerate(selection):
     fig, axes = plt.subplots(figsize=(8,6))
-    axes.hist([test_bkg.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
-    axes.hist([predict_bkg.numpy()[:,i]], nbins, density=0, histtype='bar', label=['BKG prediction'], stacked=True, alpha=0.3)
-    axes.hist([test_sig1.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=1)
-    axes.hist([predict_sig1.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1 prediction'], stacked=True, alpha=0.3)
-    axes.hist([test_sig2.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=1)
-    axes.hist([predict_sig2.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2 prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
+    axes.hist([predict_bkg.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['BKG prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1'], stacked=True, alpha=1)
+    axes.hist([predict_sig1.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 1 prediction'], stacked=True, alpha=0.3)
+    axes.hist([test_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2'], stacked=True, alpha=1)
+    axes.hist([predict_sig2.cpu().numpy()[:,i]], nbins, density=0, histtype='bar', label=['Signal 2 prediction'], stacked=True, alpha=0.3)
     axes.set_xlabel(f"{column}")
     axes.set_ylabel("Events")
     axes.set_title(f"Prediction of {column}")

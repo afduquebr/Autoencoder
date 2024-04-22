@@ -20,6 +20,11 @@ from torch.utils.data import DataLoader, TensorDataset
 from autoencoder import AutoEncoder, train, test
 from main import main, parse_args
 
+####################################### GPU or CPU running ###########################################
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+
 #######################################################################################################
 ####################################### Data Initialization ###########################################
 
@@ -83,11 +88,11 @@ sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
-train_bkg = torch.from_numpy(train_bkg.values).float()
-test_bkg = torch.from_numpy(test_bkg.values).float()
-test_sig1 = torch.from_numpy(sig1_scaled.values).float()
-test_sig2 = torch.from_numpy(sig2_scaled.values).float()
-weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float()
+train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
+test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
+test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
+test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
+weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
 trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg)
 testSet_bkg = TensorDataset(test_bkg, test_bkg)
@@ -102,7 +107,7 @@ testSet_sig2 = TensorDataset(test_sig2, test_sig2)
 input_dim = selection.size
 
 # Model creation
-model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim)
+model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 
 # Hyperparameters
 N_epochs = 100 #100
@@ -141,7 +146,7 @@ for epoch in range(N_epochs) :
     sig2Loss.append(test(model, testLoader_sig2, loss_function, epoch))
 
 # Save model
-torch.save(model.state_dict(), f"models/model_parameters_{scale}.pth")
+torch.save(model.state_dict(), f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
