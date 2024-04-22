@@ -73,9 +73,13 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(bkg[selection].sample(frac=1)), columns=selection)
-sig1_scaled = pd.DataFrame(scaler.transform(sig1[selection].sample(frac=1)), columns=selection)
-sig2_scaled = pd.DataFrame(scaler.transform(sig2[selection].sample(frac=1)), columns=selection)
+sample_bkg = bkg[selection].sample(frac=1)
+sample_sig1 = sig1[selection].sample(frac=1)
+sample_sig2 = sig2[selection].sample(frac=1)
+
+bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
+sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
+sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -85,7 +89,7 @@ test_sig1 = torch.from_numpy(sig1_scaled.values).float()
 test_sig2 = torch.from_numpy(sig2_scaled.values).float()
 weights_bkg = torch.from_numpy(weights_bkg).float()
 
-trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg[(sig1_scaled.shape[0]):, :])
+trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg.loc[sample_bkg[(sig1_scaled.shape[0]):, :]])
 testSet_bkg = TensorDataset(test_bkg, test_bkg)
 testSet_sig1 = TensorDataset(test_sig1, test_sig1)
 testSet_sig2 = TensorDataset(test_sig2, test_sig2)

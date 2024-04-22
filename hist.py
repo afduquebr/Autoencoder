@@ -96,7 +96,7 @@ directory = f"figs/histograms/{scale}/mid_{mid_dim}_lat_{latent_dim}"
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-nbins = 20
+nbins = 'fd'
 for i, column in enumerate(selection):
     fig, axes = plt.subplots(figsize=(8,6))
     axes.hist([test_bkg.numpy()[:,i]], nbins, density=0, histtype='bar', label=['Background'], stacked=True, alpha=1)
