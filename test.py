@@ -205,8 +205,8 @@ selected_values = loss_bkg_all_total[cumulative_sum <= threshold]
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([bkg.mj1j2[cumulative_sum <= 0.85 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([bkg.mj1j2[cumulative_sum <= 0.5 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([bkg.mj1j2[cumulative_sum >= 0.85 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([bkg.mj1j2[cumulative_sum >= 0.5 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
