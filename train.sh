@@ -16,8 +16,8 @@ fi
 cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
-scale="minmax"
-middle_dim="84"
+scale="standard"
+middle_dim="21"
 latent_dim="14" 
 
 # Run Training Python script
