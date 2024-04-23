@@ -8,7 +8,7 @@ if ! source .venv/bin/activate; then
 fi
 
 # Define variables for training
-scale="standard"
+scale="minmax"
 middle_dim="84"
 latent_dim="14" 
 
@@ -20,11 +20,11 @@ if ! python test.py -p local -s $scale -m $middle_dim -l $latent_dim; then
 fi
 
 # Run Histogram Python script
-echo "Plotting histograms."
-if ! python hist.py -p local -s $scale -m $middle_dim -l $latent_dim; then
-    echo "Error: Failed to run Histogram Python script."
-    exit 1
-fi
+# echo "Plotting histograms."
+# if ! python hist.py -p local -s $scale -m $middle_dim -l $latent_dim; then
+#     echo "Error: Failed to run Histogram Python script."
+#     exit 1
+# fi
 
 # Update Git repository automatically
 if ! git add .; then
