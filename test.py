@@ -175,8 +175,8 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-# bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
-bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
+bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
+# bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
