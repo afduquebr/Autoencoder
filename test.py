@@ -129,16 +129,16 @@ loss_sig1_total = loss_sig1.sum(axis=1) / 42
 loss_sig2_total = loss_sig2.sum(axis=1) / 42
 
 # Plot Total Reconstruction Error
-nbins = 20
-fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
-axes.set_xlabel(r"Reconstruction Error")
-axes.set_ylabel("Events")
-axes.set_xlim(0, 0.02)
-axes.legend(loc='upper right')
-fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
+# nbins = 20
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.hist([loss_bkg_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
+# axes.hist([loss_sig1_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+# axes.hist([loss_sig2_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+# axes.set_xlabel(r"Reconstruction Error")
+# axes.set_ylabel("Events")
+# axes.set_xlim(0, 0.02)
+# axes.legend(loc='upper right')
+# fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ ROC Curve ##############################################
 
@@ -175,8 +175,8 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
-# bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
+# bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
+bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
