@@ -108,9 +108,9 @@ with torch.no_grad(): # no need to compute gradients here
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
 
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=sig1[selection].columns)
+predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=selection)
+predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=selection)
+predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=selection)
 
 # Determine Reconstruction Error
 loss_bkg = pd.DataFrame()
@@ -175,17 +175,17 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
+bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
     all_bkg = model(bkg_tensor)
 
-all_bkg_df = pd.DataFrame(scaler.inverse_transform(all_bkg.cpu().numpy()), columns=sig1[selection].columns)
+all_bkg_df = pd.DataFrame(scaler.inverse_transform(all_bkg.cpu().numpy()), columns=selection)
 
 loss_bkg_all = pd.DataFrame()
 
-for column, i in zip(predict_bkg_df.columns, range(predict_bkg.shape[1])):
+for i, column in enumerate(selection):
     loss_bkg_all[column] = loss(bkg_tensor[:, i], all_bkg[:, i]).cpu().numpy()
 
 loss_bkg_all_total = loss_bkg_all.sum(axis=1) / 42
@@ -224,3 +224,14 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel("Events")
 axes.legend()
 fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+
+
+############################################ Reconstruction Error vs Mass Distribution  ##############################################
+
+fig, axes = plt.subplots(figsize=(8,6))
+axes.scatter(mjj_bkg, loss_bkg_all_total, alpha=1)
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel("Reconstruction Error")
+axes.set_title(f"Distribution for {scale}, m={mid_dim}, l={latent_dim}")
+axes.legend()
+fig.savefig(f"figs/testing/reco_mass_{scale}_{mid_dim}_{latent_dim}.png")
