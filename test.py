@@ -229,7 +229,7 @@ fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.p
 ############################################ Normalised Mass Distribution  ##############################################
 
 fig, axes = plt.subplots(figsize=(8,6))
-axes.bar(loss_bkg_all.columns, loss_bkg_all.mean().values)
+axes.bar(range(loss_bkg_all.columns.size), loss_bkg_all.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
