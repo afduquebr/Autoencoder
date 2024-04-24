@@ -129,16 +129,16 @@ loss_sig1_total = loss_sig1.sum(axis=1) / 42
 loss_sig2_total = loss_sig2.sum(axis=1) / 42
 
 # Plot Total Reconstruction Error
-# nbins = 20
-# fig, axes = plt.subplots(figsize=(8,6))
-# axes.hist([loss_bkg_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
-# axes.hist([loss_sig1_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-# axes.hist([loss_sig2_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
-# axes.set_xlabel(r"Reconstruction Error")
-# axes.set_ylabel("Events")
-# axes.set_xlim(0, 0.02)
-# axes.legend(loc='upper right')
-# fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
+nbins = 20
+fig, axes = plt.subplots(figsize=(8,6))
+axes.hist([loss_bkg_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0, 0.02), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.set_xlabel(r"Reconstruction Error")
+axes.set_ylabel("Events")
+axes.set_xlim(0, 0.02)
+axes.legend(loc='upper right')
+fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ ROC Curve ##############################################
 
@@ -189,7 +189,7 @@ loss_bkg_all = pd.DataFrame()
 for i, column in enumerate(selection):
     loss_bkg_all[column] = loss(bkg_tensor[:, i], all_bkg[:, i]).cpu().numpy()
 
-loss_bkg_all_total = loss_bkg_all.sum(axis=1) / 42
+loss_bkg_all_total = loss_bkg_all.mean(axis=1)
 
 # Invariant mass distribution with respect to BKG anomaly score
 cumulative_sum = loss_bkg_all_total.sort_values().cumsum()
@@ -225,3 +225,18 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel("Events")
 axes.legend()
 fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+
+############################################ Normalised Mass Distribution  ##############################################
+
+nbins = 20
+fig, axes = plt.subplots(figsize=(8,6))
+for i, column in enumerate(selection):
+    axes.hist([loss_bkg_all[column]], nbins, range=(0, 1), density=0, histtype='step', label=[f'{column}'], alpha=1)
+    
+axes.set_xlabel(f"Reconstruction Error")
+axes.set_ylabel("Events")
+axes.set_yscale("log")
+axes.set_xlim(0, 1)
+fig.legend()
+fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
+plt.close()
