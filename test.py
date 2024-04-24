@@ -228,15 +228,11 @@ fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.p
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-for i, column in enumerate(selection):
-    axes.hist([loss_bkg_all[column]], nbins, range=(0, 1), density=0, histtype='step', label=[f'{column}'], alpha=1)
-    
-axes.set_xlabel(f"Reconstruction Error")
-axes.set_ylabel("Events")
+axes.bar(loss_bkg_all.columns, loss_bkg_all.mean().values)
+axes.set_xlabel("Features")
+axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
-axes.set_xlim(0, 1)
+# axes.set_xlim(0, 1)
 fig.legend()
 fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
-plt.close()
