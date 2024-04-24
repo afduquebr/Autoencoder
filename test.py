@@ -172,7 +172,6 @@ axes.legend(loc="lower right")
 fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 
-
 ############################################ Normalised Mass Distribution  ##############################################
 
 bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
@@ -233,6 +232,5 @@ axes.bar(range(loss_bkg_all.columns.size), loss_bkg_all.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
-# axes.set_xlim(0, 1)
 fig.legend()
 fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
