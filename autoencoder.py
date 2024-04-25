@@ -25,9 +25,9 @@ print("Using device:", device)
 ######################################### AutoEncoder Class ###########################################
 
 # Creating a PyTorch class
-# 42 ==> 21 ==> 14 ==> 21 ==> 42
+# 42 ==> 84 ==> 14 ==> 84 ==> 42
 class AutoEncoder(nn.Module):
-    def __init__(self, input_dim = 42, mid_dim = 21, latent_dim = 14):
+    def __init__(self, input_dim = 42, mid_dim = 84, latent_dim = 14):
         super(AutoEncoder, self).__init__()
         # Building an linear encoder with Linear
         # layer followed by Relu activation function
@@ -49,9 +49,9 @@ class AutoEncoder(nn.Module):
         )
 
         # Initialize decoder weights with encoder weights
-        self.init_decoder_weights() 
+        self.constrain_weights() 
         
-    def init_decoder_weights(self):
+    def constrain_weights(self):
         # Iterate over encoder and decoder layers
         for encoder_layer, decoder_layer in zip(self.encoder, reversed(self.decoder)):
             # Check if the layer is a linear layer
@@ -71,7 +71,7 @@ class AutoEncoder(nn.Module):
     def forward(self, x):
         x = self.encode(x)
         x = self.decode(x) 
-        self.init_decoder_weights()
+        self.constrain_weights()
         return x
 
 #######################################################################################################
