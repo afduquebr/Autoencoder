@@ -16,6 +16,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision
 
+from Disco import distance_corr
+
 ####################################### GPU or CPU running ###########################################
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -83,18 +85,20 @@ class WeightedMSELoss(nn.Module):
         self.weight = weight
 
     def forward(self, output, target):
-        loss = torch.mean(self.weight * (output - target)**2)
-        return loss
+        loss_MSE = torch.mean(self.weight * (output - target)**2)
+        return loss_MSE
 
 #######################################################################################################
 ########################################## Model Training #############################################
 
-def train(model, data_loader, loss_function, opt, epoch):
+def train(model, data_loader, loss_function, opt, epoch, alpha=0):
     model.train()
-    for i, (features, _) in enumerate(data_loader):     
+    for i, (features, _, mass) in enumerate(data_loader):     
         features = features.to(device) 
+        mass = mass.to(device) 
         prediction = model(features)
-        loss = loss_function(prediction, features)
+        error = torch.mean(loss(features, prediction), dim=1)
+        loss = loss_function(prediction, features) + alpha * distance_corr(mass, error, torch.ones_like(mass))
         opt.zero_grad()
         loss.backward()
         opt.step()

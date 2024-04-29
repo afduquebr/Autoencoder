@@ -113,20 +113,16 @@ predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy
 predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=selection)
 
 # Determine Reconstruction Error
-loss_bkg = pd.DataFrame()
-loss_sig1 = pd.DataFrame()
-loss_sig2 = pd.DataFrame()
 
 # MSE per feature
-for i, column in enumerate(predict_bkg_df.columns):
-    loss_bkg[column] = loss(test_bkg[:, i], predict_bkg[:, i]).numpy()
-    loss_sig1[column] = loss(test_sig1[:, i], predict_sig1[:, i]).numpy()
-    loss_sig2[column] = loss(test_sig2[:, i], predict_sig2[:, i]).numpy()
+loss_bkg = pd.DataFrame(loss(test_bkg, predict_bkg).numpy(), columns=selection)
+loss_sig1 = pd.DataFrame(loss(test_sig1, predict_sig1).numpy(), columns=selection)
+loss_sig2 = pd.DataFrame(loss(test_sig2, predict_sig2).numpy(), columns=selection)
 
 # Total MSE
-loss_bkg_total = loss_bkg.sum(axis=1) / 42
-loss_sig1_total = loss_sig1.sum(axis=1) / 42
-loss_sig2_total = loss_sig2.sum(axis=1) / 42
+loss_bkg_total = loss_bkg.mean(axis=1)
+loss_sig1_total = loss_sig1.mean(axis=1)
+loss_sig2_total = loss_sig2.mean(axis=1)
 
 # Plot Total Reconstruction Error
 nbins = 20
