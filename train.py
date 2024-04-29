@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from autoencoder import AutoEncoder, train, test
+from autoencoder import AutoEncoder, WeightedMSELoss, train, test
 from main import main, parse_args
 
 ####################################### GPU or CPU running ###########################################
@@ -92,10 +92,10 @@ test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
 weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
-trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg)
-testSet_bkg = TensorDataset(test_bkg, test_bkg)
-testSet_sig1 = TensorDataset(test_sig1, test_sig1)
-testSet_sig2 = TensorDataset(test_sig2, test_sig2)
+trainSet = TensorDataset(train_bkg, weights_bkg)
+testSet_bkg = TensorDataset(test_bkg)
+testSet_sig1 = TensorDataset(test_sig1)
+testSet_sig2 = TensorDataset(test_sig2)
 
 
 #######################################################################################################
@@ -119,6 +119,7 @@ testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, 
 testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
 
 # Loss function
+criterion = WeightedMSELoss(weights_bkg)
 loss_function = nn.MSELoss()
 
 # Optimizer
@@ -135,7 +136,7 @@ sig2Loss = []
 # Run training and store validation through training
 for epoch in range(N_epochs) :
     print("Training")
-    trainLoss.append(train(model, trainLoader, loss_function, optimizer, epoch))
+    trainLoss.append(train(model, trainLoader, criterion, optimizer, epoch))
     print("Validating")
     testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
     print("Testing Signal 1")

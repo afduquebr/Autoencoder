@@ -75,11 +75,23 @@ class AutoEncoder(nn.Module):
         return x
 
 #######################################################################################################
+########################################## Weighted Loss #############################################
+
+class WeightedMSELoss(nn.Module):
+    def __init__(self, weight):
+        super(WeightedMSELoss, self).__init__()
+        self.weight = weight
+
+    def forward(self, output, target):
+        loss = torch.mean(self.weight * (output - target)**2)
+        return loss
+
+#######################################################################################################
 ########################################## Model Training #############################################
 
 def train(model, data_loader, loss_function, opt, epoch):
     model.train()
-    for i, (features, _, _) in enumerate(data_loader):     
+    for i, (features, _) in enumerate(data_loader):     
         features = features.to(device) 
         prediction = model(features)
         loss = loss_function(prediction, features)
@@ -98,7 +110,7 @@ def train(model, data_loader, loss_function, opt, epoch):
 
 def test(model, data_loader, loss_function, epoch):
     model.eval()
-    for i, (features, _) in enumerate(data_loader):     
+    for i, (features) in enumerate(data_loader):     
         features = features.to(device) 
         prediction = model(features)
         loss = loss_function(prediction, features)
