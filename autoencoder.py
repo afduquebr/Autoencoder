@@ -79,27 +79,22 @@ class AutoEncoder(nn.Module):
 #######################################################################################################
 ########################################### Weighted Loss #############################################
 
-class WeightedMSELoss(nn.Module):
-    def __init__(self, weight):
-        super(WeightedMSELoss, self).__init__()
-        self.weight = weight
-
-    def forward(self, output, target):
-        loss_MSE = torch.mean(self.weight * (output - target)**2)
-        return loss_MSE
+def WeightedMSELoss(output, target, weight):
+    loss_MSE = torch.mean(weight.unsqueeze(1) * (output - target)**2)
+    return loss_MSE
 
 #######################################################################################################
 ########################################## Model Training #############################################
 
 def train(model, data_loader, loss_function, opt, epoch, alpha=0):
     model.train()
-    for i, (features, weights, mass) in enumerate(data_loader):     
-        features = features.to(device) 
-        mass = mass.to(device) 
+    for i, (features, weights, mass) in enumerate(data_loader): 
+        features = features.to(device)
+        mass = mass.to(device)
         prediction = model(features)
         error = torch.mean(loss(features, prediction), dim=1)
         disco = distance_corr(mass, error, torch.ones_like(mass))
-        train_loss = loss_function(prediction, features) + alpha * disco
+        train_loss = loss_function(prediction, features, weights) + alpha * disco
         opt.zero_grad()
         train_loss.backward()
         opt.step()
