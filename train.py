@@ -111,7 +111,7 @@ model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = laten
 N_epochs = 100 #100
 batch_size = 2048
 learning_rate = 0.0002
-alpha = 0
+alpha = 60
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
