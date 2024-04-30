@@ -110,7 +110,7 @@ def train(model, data_loader, loss_function, opt, epoch, alpha=0):
 
 def test(model, data_loader, loss_function, epoch):
     model.eval()
-    for i, (features) in enumerate(data_loader):     
+    for i, (features, _) in enumerate(data_loader):     
         features = features.to(device) 
         prediction = model(features)
         test_loss = loss_function(prediction, features)

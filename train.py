@@ -94,9 +94,9 @@ weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0
 mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
 trainSet = TensorDataset(train_bkg, weights_bkg, mjj_bkg)
-testSet_bkg = TensorDataset(test_bkg)
-testSet_sig1 = TensorDataset(test_sig1)
-testSet_sig2 = TensorDataset(test_sig2)
+testSet_bkg = TensorDataset(test_bkg, test_bkg)
+testSet_sig1 = TensorDataset(test_sig1, test_sig1)
+testSet_sig2 = TensorDataset(test_sig2, test_sig2)
 
 #######################################################################################################
 ######################################### Model Initlization ##########################################
