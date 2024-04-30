@@ -120,7 +120,7 @@ testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, 
 testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
 
 # Loss function
-criterion = WeightedMSELoss()
+# criterion = WeightedMSELoss
 loss_function = nn.MSELoss()
 
 # Optimizer
@@ -137,7 +137,7 @@ sig2Loss = []
 # Run training and store validation through training
 for epoch in range(N_epochs) :
     print("Training")
-    trainLoss.append(train(model, trainLoader, criterion, optimizer, epoch, alpha))
+    trainLoss.append(train(model, trainLoader, WeightedMSELoss, optimizer, epoch, alpha))
     print("Validating")
     testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
     print("Testing Signal 1")
