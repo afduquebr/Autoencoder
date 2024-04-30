@@ -121,5 +121,5 @@ def test(model, data_loader, loss_function, epoch):
     return test_loss.item()
 
 # Define Reconstruction Error function
-def loss(dataset, prediction):
-    return torch.pow(dataset - prediction, 2)
+def loss(output, target):
+    return torch.pow(output - target, 2)
