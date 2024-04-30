@@ -91,12 +91,12 @@ test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
 weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
-trainSet = TensorDataset(train_bkg, weights_bkg)
+trainSet = TensorDataset(train_bkg, weights_bkg, mjj_bkg)
 testSet_bkg = TensorDataset(test_bkg)
 testSet_sig1 = TensorDataset(test_sig1)
 testSet_sig2 = TensorDataset(test_sig2)
-
 
 #######################################################################################################
 ######################################### Model Initlization ##########################################
@@ -111,6 +111,7 @@ model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = laten
 N_epochs = 100 #100
 batch_size = 2048
 learning_rate = 0.0002
+alpha = 0
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -136,7 +137,7 @@ sig2Loss = []
 # Run training and store validation through training
 for epoch in range(N_epochs) :
     print("Training")
-    trainLoss.append(train(model, trainLoader, criterion, optimizer, epoch))
+    trainLoss.append(train(model, trainLoader, criterion, optimizer, epoch, alpha))
     print("Validating")
     testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
     print("Testing Signal 1")

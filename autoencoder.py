@@ -77,7 +77,7 @@ class AutoEncoder(nn.Module):
         return x
 
 #######################################################################################################
-########################################## Weighted Loss #############################################
+########################################### Weighted Loss #############################################
 
 class WeightedMSELoss(nn.Module):
     def __init__(self, weight):
@@ -93,21 +93,22 @@ class WeightedMSELoss(nn.Module):
 
 def train(model, data_loader, loss_function, opt, epoch, alpha=0):
     model.train()
-    for i, (features, _, mass) in enumerate(data_loader):     
+    for i, (features, weights, mass) in enumerate(data_loader):     
         features = features.to(device) 
         mass = mass.to(device) 
         prediction = model(features)
         error = torch.mean(loss(features, prediction), dim=1)
-        loss = loss_function(prediction, features) + alpha * distance_corr(mass, error, torch.ones_like(mass))
+        disco = distance_corr(mass, error, torch.ones_like(mass))
+        train_loss = loss_function(prediction, features) + alpha * disco
         opt.zero_grad()
-        loss.backward()
+        train_loss.backward()
         opt.step()
 
         # print statistics
         if i % 100 == 99:    
             print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Training loss: %.3f'% (loss.item()))
-    return loss.item()
+            print('Training loss: %.3f'% (train_loss.item()))
+    return train_loss.item()
 
 #######################################################################################################
 ##################################### Model Testing and Loss ##########################################
@@ -117,12 +118,12 @@ def test(model, data_loader, loss_function, epoch):
     for i, (features) in enumerate(data_loader):     
         features = features.to(device) 
         prediction = model(features)
-        loss = loss_function(prediction, features)
+        test_loss = loss_function(prediction, features)
         # print statistics
         if i % 100 == 99:    
             print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Testing loss: %.3f'% (loss.item()))
-    return loss.item()
+            print('Testing loss: %.3f'% (test_loss.item()))
+    return test_loss.item()
 
 # Define Reconstruction Error function
 def loss(dataset, prediction):
