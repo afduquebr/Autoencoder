@@ -120,7 +120,7 @@ testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, 
 testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
 
 # Loss function
-criterion = WeightedMSELoss(weights_bkg)
+criterion = WeightedMSELoss()
 loss_function = nn.MSELoss()
 
 # Optimizer
