@@ -93,7 +93,7 @@ def train(model, data_loader, loss_function, opt, epoch, alpha=0):
         mass = mass.to(device)
         prediction = model(features)
         error = torch.mean(loss(features, prediction), dim=1)
-        disco = distance_corr(mass, error, weights) # torch.ones_like(mass))
+        disco = distance_corr(mass, error, torch.ones_like(mass))
         train_loss = loss_function(prediction, features, weights) + alpha * disco
         opt.zero_grad()
         train_loss.backward()
