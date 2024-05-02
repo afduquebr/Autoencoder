@@ -9,7 +9,7 @@ fi
 
 # Define variables for training
 scale="minmax"
-middle_dim="84"
+middle_dim="21"
 latent_dim="14" 
 
 # Run Testing Python script
