@@ -47,7 +47,7 @@ class AutoEncoder(nn.Module):
             nn.Linear(latent_dim, mid_dim),
             nn.ReLU(),
             nn.Linear(mid_dim, input_dim),
-            nn.ReLU()
+            nn.ELU()
         )
 
         # Initialize decoder weights with encoder weights
