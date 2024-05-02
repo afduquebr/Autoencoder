@@ -83,6 +83,28 @@ sample_sig2 = sig2[selection].sample(frac=1)
 bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
 sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
 sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
+
+if scale == "minmax":
+    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
+    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    for col in bkg_scaled.columns:
+        min_val = second_to_last_min[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
+        max_val = second_to_last_max[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
+
+    scaler2 = MinMaxScaler()
+    bkg_scaled = pd.DataFrame(scaler2.fit_transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+
+#######################################################################################################
+######################################## Data Rescaling ###########################################
+
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -108,10 +130,10 @@ input_dim = selection.size
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 
 # Hyperparameters
-N_epochs = 100 #100
+N_epochs = 100
 batch_size = 2048
 learning_rate = 0.0002
-alpha = 60
+alpha = 0.7
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)

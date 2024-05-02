@@ -69,6 +69,28 @@ sample_sig2 = sig2[selection].sample(frac=1)
 bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
 sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
 sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
+
+if scale == "minmax":
+    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
+    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    for col in bkg_scaled.columns:
+        min_val = second_to_last_min[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
+        max_val = second_to_last_max[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
+
+    scaler2 = MinMaxScaler()
+    bkg_scaled = pd.DataFrame(scaler2.fit_transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+
+#######################################################################################################
+######################################## Data Rescaling ###########################################
+
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -92,10 +114,6 @@ with torch.no_grad(): # no need to compute gradients here
     predict_bkg = model(test_bkg)
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
-
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=sig1[selection].columns)
 
 #######################################################################################################
 ############################################# Histograms ##############################################

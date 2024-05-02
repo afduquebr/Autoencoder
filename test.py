@@ -83,6 +83,28 @@ sample_sig2 = sig2[selection].sample(frac=1)
 bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
 sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
 sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
+
+if scale == "minmax":
+    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
+    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    for col in bkg_scaled.columns:
+        min_val = second_to_last_min[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
+        max_val = second_to_last_max[col]
+        bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
+        sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
+        sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
+
+    scaler2 = MinMaxScaler()
+    bkg_scaled = pd.DataFrame(scaler2.fit_transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+
+#######################################################################################################
+######################################## Data Rescaling ###########################################
+
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -90,7 +112,8 @@ train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
 test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
-weights_bkg = torch.from_numpy(weights_bkg).float().to(device)
+weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
@@ -107,10 +130,6 @@ with torch.no_grad(): # no need to compute gradients here
     predict_bkg = model(test_bkg)
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
-
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=selection)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=selection)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=selection)
 
 # Determine Reconstruction Error
 
@@ -170,14 +189,22 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
+bkg_all_scaled = pd.DataFrame(scaler.transform(bkg[selection]), columns=selection)
+
+if scale == "minmax":
+    for col in bkg_all_scaled.columns:
+        min_val = second_to_last_min[col]
+        bkg_all_scaled[col] = bkg_all_scaled[col].replace(0, min_val)
+        max_val = second_to_last_max[col]
+        bkg_all_scaled[col] = bkg_all_scaled[col].replace(1, max_val)
+
+    bkg_all_scaled = pd.DataFrame(scaler2.fit_transform(bkg_all_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+
 bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
-# bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
     all_bkg = model(bkg_tensor)
-
-all_bkg_df = pd.DataFrame(scaler.inverse_transform(all_bkg.cpu().numpy()), columns=selection)
 
 loss_bkg_all = pd.DataFrame()
 
