@@ -76,44 +76,49 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-sample_bkg = bkg[selection].sample(frac=1)
-sample_sig1 = sig1[selection].sample(frac=1)
-sample_sig2 = sig2[selection].sample(frac=1)
+sample_bkg = bkg[selection] #.sample(frac=1)
+sample_sig1 = sig1[selection] #.sample(frac=1)
+sample_sig2 = sig2[selection] #.sample(frac=1)
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
+# Concatenate all datasets for the current column to find the global min and max
+all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
+data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
+
+# Apply scaling to each dataset per column
+bkg_scaled = pd.DataFrame(scaler.transform(sample_bkg), columns=selection)
 sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
 sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
 
+
 if scale == "minmax":
-    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
-    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
     for col in bkg_scaled.columns:
         min_val = second_to_last_min[col]
+        data_scaled[col] = data_scaled[col].replace(0, min_val)
         bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
         sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
         sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
         max_val = second_to_last_max[col]
+        data_scaled[col] = data_scaled[col].replace(1, max_val)
         bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
         sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
         sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
 
     scaler2 = MinMaxScaler()
-    bkg_scaled = pd.DataFrame(scaler2.fit_transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    data_scaled = pd.DataFrame(scaler2.fit_transform(data_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    bkg_scaled = pd.DataFrame(scaler2.transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
     sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
     sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
 
 #######################################################################################################
-######################################## Data Rescaling ###########################################
+######################################### Data Rescaling ##############################################
 
-train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
-test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
-
-train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
-test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
+test_bkg = torch.from_numpy(bkg_scaled.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
-weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
-mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
+weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index]).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index]).float().to(device)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
@@ -124,6 +129,7 @@ input_dim = selection.size
 # Load Model
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth", map_location=device))
+model.eval()
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
@@ -146,12 +152,12 @@ loss_sig2_total = loss_sig2.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0, 1), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0, 1), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0, 1), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, range=(0, 0.1), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0, 0.1), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0, 0.1), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0, 1)
+axes.set_xlim(0, 0.1)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
@@ -189,32 +195,8 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-bkg_all_scaled = pd.DataFrame(scaler.transform(bkg[selection]), columns=selection)
-
-if scale == "minmax":
-    for col in bkg_all_scaled.columns:
-        min_val = second_to_last_min[col]
-        bkg_all_scaled[col] = bkg_all_scaled[col].replace(0, min_val)
-        max_val = second_to_last_max[col]
-        bkg_all_scaled[col] = bkg_all_scaled[col].replace(1, max_val)
-
-    bkg_all_scaled = pd.DataFrame(scaler2.fit_transform(bkg_all_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
-
-bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
-
-# Predictions
-with torch.no_grad(): # no need to compute gradients here
-    all_bkg = model(bkg_tensor)
-
-loss_bkg_all = pd.DataFrame()
-
-for i, column in enumerate(selection):
-    loss_bkg_all[column] = loss(bkg_tensor[:, i], all_bkg[:, i]).cpu().numpy()
-
-loss_bkg_all_total = loss_bkg_all.mean(axis=1)
-
 # Invariant mass distribution with respect to BKG anomaly score
-cumulative_sum = loss_bkg_all_total.sort_values().cumsum()
+cumulative_sum = loss_bkg_total.sort_values().cumsum()
 
 # Calculate the total sum
 total_sum = cumulative_sum.iloc[-1]
@@ -223,7 +205,7 @@ total_sum = cumulative_sum.iloc[-1]
 threshold = 0.8 * total_sum
 
 # Select values where the cumulative sum is less than or equal to the threshold
-selected_values = loss_bkg_all_total[cumulative_sum <= threshold]
+selected_values = loss_bkg_total[cumulative_sum <= threshold]
 
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
@@ -251,7 +233,7 @@ fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.p
 ############################################ Normalised Mass Distribution  ##############################################
 
 fig, axes = plt.subplots(figsize=(8,6))
-axes.bar(range(loss_bkg_all.columns.size), loss_bkg_all.mean().values)
+axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")

@@ -80,25 +80,34 @@ sample_bkg = bkg[selection].sample(frac=1)
 sample_sig1 = sig1[selection].sample(frac=1)
 sample_sig2 = sig2[selection].sample(frac=1)
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
+# Concatenate all datasets for the current column to find the global min and max
+all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
+data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
+
+# Apply scaling to each dataset per column
+bkg_scaled = pd.DataFrame(scaler.transform(sample_bkg), columns=selection)
 sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
 sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
 
+
 if scale == "minmax":
-    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
-    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
     for col in bkg_scaled.columns:
         min_val = second_to_last_min[col]
+        data_scaled[col] = data_scaled[col].replace(0, min_val)
         bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
         sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
         sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
         max_val = second_to_last_max[col]
+        data_scaled[col] = data_scaled[col].replace(1, max_val)
         bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
         sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
         sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
 
     scaler2 = MinMaxScaler()
-    bkg_scaled = pd.DataFrame(scaler2.fit_transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    data_scaled = pd.DataFrame(scaler2.fit_transform(data_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+    bkg_scaled = pd.DataFrame(scaler2.transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
     sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
     sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
 
@@ -173,10 +182,17 @@ torch.save(model.state_dict(), f"models/model_parameters_{scale}_{mid_dim}_{late
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
 axes.scatter(range(N_epochs), trainLoss, marker="*", s=10, label='Training loss function')
+axes.set_xlabel('N epochs',fontsize=10)
+axes.set_ylabel('Loss during Training',fontsize=10)
+axes.legend(loc='upper right',fontsize=10)
+fig.savefig(f"figs/training/train_loss_{scale}_{mid_dim}_{latent_dim}.png")
+
+# Create Loss per Epochs
+fig, axes = plt.subplots(figsize=(8,6))
 axes.scatter(range(N_epochs), testLoss, marker="^", s=8, label='Background testing loss function')
 axes.scatter(range(N_epochs), sig1Loss, marker="o", s=8, label='Signal 1 testing loss function')
 axes.scatter(range(N_epochs), sig2Loss, marker="o", s=8, label='Signal 2 testing loss function')
 axes.set_xlabel('N epochs',fontsize=10)
-axes.set_ylabel('Loss',fontsize=10)
+axes.set_ylabel('Loss during Evaluation',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
-fig.savefig(f"figs/training/loss_{scale}_{mid_dim}_{latent_dim}.png")
+fig.savefig(f"figs/training/eval_loss_{scale}_{mid_dim}_{latent_dim}.png")
