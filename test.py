@@ -152,12 +152,12 @@ loss_sig2_total = loss_sig2.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0.01, 0.06), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0.01, 0.06), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0.01, 0.06), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0.01, 0.06)
+axes.set_xlim(0.01, 0.15)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
@@ -220,15 +220,15 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-nbins = 30
-fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Bkg'], stacked=True, alpha=1)
-axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
-axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
-axes.set_xlabel(r"$m_{jet_1•jet_2}$")
-axes.set_ylabel("Events")
-axes.legend()
-fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+# nbins = 30
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Bkg'], stacked=True, alpha=1)
+# axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
+# axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
+# axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+# axes.set_ylabel("Events")
+# axes.legend()
+# fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
@@ -238,3 +238,20 @@ axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
 fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
+
+############################################### Mass vs Loss Distribution  ##############################################
+
+# Create a 2D histogram
+fig, axes = plt.subplots(figsize=(8, 6))
+pcm = axes.hist2d(mjj_bkg.numpy(), loss_bkg_total.values, bins=30, cmap='Blues', alpha=0.6, label='Distribution 1')
+
+# Add labels, title, and legend
+cbar = fig.colorbar(pcm[3], ax=axes, label='Counts')
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel('Reconstruction Error')
+axes.set_title('2D Histogram of Mass and Loss')
+
+# Show plot
+plt.grid(True)
+fig.savefig(f"figs/testing/massLoss_{scale}_{mid_dim}_{latent_dim}.png")
+plt.grid(False)
