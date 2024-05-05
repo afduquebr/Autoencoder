@@ -37,7 +37,8 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, mid_dim),
             nn.ReLU(),
-            nn.Linear(mid_dim, latent_dim)
+            nn.Linear(mid_dim, latent_dim),
+            nn.ReLU()
         )
         
         # Building an linear decoder with Linear
