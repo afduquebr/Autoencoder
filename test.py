@@ -84,10 +84,9 @@ sample_sig2 = sig2[selection].sample(frac=1)
 # Concatenate all datasets for the current column to find the global min and max
 all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
 
-second_to_last_min = all_data[smooth_cols].apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
 for col in smooth_cols:
-    min_val = second_to_last_min[col]
-    all_data[col] = all_data[col].replace(0, min_val)
+    first_positive = all_data[col][all_data[col] > 0].min()
+    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
 
 all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
 
