@@ -41,6 +41,7 @@ sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
 selection = pd.read_csv(f"dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("../Autoencoder/scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -82,34 +83,23 @@ sample_sig2 = sig2[selection].sample(frac=1)
 
 # Concatenate all datasets for the current column to find the global min and max
 all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
+
+second_to_last_min = all_data[smooth_cols].apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
+for col in smooth_cols:
+    min_val = second_to_last_min[col]
+    all_data[col] = all_data[col].replace(0, min_val)
+
+all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+
+
+# Create a MinMaxScaler object with adjusted parameters for the current column
+scaler = MinMaxScaler()
 data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
 
 # Apply scaling to each dataset per column
-bkg_scaled = pd.DataFrame(scaler.transform(sample_bkg), columns=selection)
-sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
-sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
-
-
-if scale == "minmax":
-    second_to_last_min = bkg_scaled.apply(lambda x: sorted(set(x))[1] if len(set(x)) >= 2 else None)
-    second_to_last_max = bkg_scaled.apply(lambda x: sorted(set(x))[-2] if len(set(x)) >= 2 else None)
-    for col in bkg_scaled.columns:
-        min_val = second_to_last_min[col]
-        data_scaled[col] = data_scaled[col].replace(0, min_val)
-        bkg_scaled[col] = bkg_scaled[col].replace(0, min_val)
-        sig1_scaled[col] = sig1_scaled[col].replace(0, min_val)
-        sig2_scaled[col] = sig2_scaled[col].replace(0, min_val)
-        max_val = second_to_last_max[col]
-        data_scaled[col] = data_scaled[col].replace(1, max_val)
-        bkg_scaled[col] = bkg_scaled[col].replace(1, max_val)
-        sig1_scaled[col] = sig1_scaled[col].replace(1, max_val)
-        sig2_scaled[col] = sig2_scaled[col].replace(1, max_val)
-
-    scaler2 = MinMaxScaler()
-    data_scaled = pd.DataFrame(scaler2.fit_transform(data_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
-    bkg_scaled = pd.DataFrame(scaler2.transform(bkg_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
-    sig1_scaled = pd.DataFrame(scaler2.transform(sig1_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
-    sig2_scaled = pd.DataFrame(scaler2.transform(sig2_scaled.apply(lambda x: np.log(x / (1 - x)))), columns=selection)
+bkg_scaled = data_scaled.iloc[:len(sample_bkg)]
+sig1_scaled = data_scaled.iloc[len(sample_bkg):-len(sample_sig2)]
+sig2_scaled = data_scaled.iloc[-len(sample_sig2):]
 
 #######################################################################################################
 ######################################## Data Rescaling ###########################################
