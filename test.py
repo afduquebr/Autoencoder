@@ -243,3 +243,35 @@ axes.set_title('2D Histogram of Mass and Loss')
 plt.grid(True)
 fig.savefig(f"figs/testing/massLoss_{scale}_{mid_dim}_{latent_dim}.png")
 plt.grid(False)
+
+# Make it a 1D histogram
+_, bins = np.histogram(mjj_bkg.numpy(), bins=50, range=(2700, 5000))
+
+loss_bkg_avg = []
+loss_sig1_avg = []
+loss_sig2_avg = []
+for i in range(len(bins) - 1):
+    loss_bkg_bin = loss_bkg_total[(pd.Series(mjj_bkg.numpy()) >= bins[i]) & (pd.Series(mjj_bkg.numpy()) < bins[i + 1])]
+    loss_sig1_bin = loss_sig1_total[(mjj_sig1 >= bins[i]) & (mjj_sig1 < bins[i + 1])]
+    loss_sig2_bin = loss_sig2_total[(mjj_sig2 >= bins[i]) & (mjj_sig2 < bins[i + 1])]
+
+    loss_bkg_bin_avg = np.mean(loss_bkg_bin)
+    loss_sig1_bin_avg = np.mean(loss_sig1_bin)
+    loss_sig2_bin_avg = np.mean(loss_sig2_bin)
+
+    loss_bkg_avg.append(loss_bkg_bin_avg)
+    loss_sig1_avg.append(loss_sig1_bin_avg)
+    loss_sig2_avg.append(loss_sig2_bin_avg)
+
+# Plot ROC curve
+fig, axes = plt.subplots(figsize=(8,6))
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_bkg_avg, label='Background')
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig1_avg, label='Signal 1')
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig2_avg, label='Signal 2')
+axes.set_xlim([2700, 5000])
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel('Reconstruction Error')
+axes.set_title('Avg Error v. Mass Distribution')
+# axes.legend(loc="lower right")
+fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
+
