@@ -272,6 +272,6 @@ axes.set_xlim([2700, 5000])
 axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel('Reconstruction Error')
 axes.set_title('Avg Error v. Mass Distribution')
-# axes.legend(loc="lower right")
+axes.legend()
 fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
 
