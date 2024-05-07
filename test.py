@@ -77,9 +77,9 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-sample_bkg = bkg[selection] #.sample(frac=1)
-sample_sig1 = sig1[selection] #.sample(frac=1)
-sample_sig2 = sig2[selection] #.sample(frac=1)
+sample_bkg = bkg[selection].sample(frac=1)
+sample_sig1 = sig1[selection].sample(frac=1)
+sample_sig2 = sig2[selection].sample(frac=1)
 
 # Concatenate all datasets for the current column to find the global min and max
 all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
