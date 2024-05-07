@@ -274,4 +274,3 @@ axes.set_ylabel('Reconstruction Error')
 axes.set_title('Avg Error v. Mass Distribution')
 axes.legend()
 fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
-
