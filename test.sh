@@ -8,8 +8,8 @@ if ! source .venv/bin/activate; then
 fi
 
 # Define variables for training
-scale="standard"
-middle_dim="21"
+scale="minmax"
+middle_dim="84"
 latent_dim="14" 
 
 # Run Testing Python script
@@ -27,20 +27,20 @@ fi
 # fi
 
 # Update Git repository automatically
-if ! git add .; then
-    echo "Error: Failed to add files to Git."
-    exit 1
-fi
+# if ! git add .; then
+#     echo "Error: Failed to add files to Git."
+#     exit 1
+# fi
 
-if ! git commit -m "Testing with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
-    echo "Error: Failed to commit changes to Git."
-    exit 1
-fi
+# if ! git commit -m "Testing with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
+#     echo "Error: Failed to commit changes to Git."
+#     exit 1
+# fi
 
-if ! git push; then
-    echo "Error: Failed to push changes to Git repository."
-    exit 1
-fi
+# if ! git push; then
+#     echo "Error: Failed to push changes to Git repository."
+#     exit 1
+# fi
 
 # Deactivate the environment
 echo "deactivating virtual environment."
