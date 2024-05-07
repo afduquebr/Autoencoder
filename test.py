@@ -92,7 +92,6 @@ all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
 
 
 # Create a MinMaxScaler object with adjusted parameters for the current column
-scaler = MinMaxScaler()
 data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
 
 # Apply scaling to each dataset per column
