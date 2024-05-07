@@ -38,6 +38,7 @@ sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
 selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("../Autoencoder/scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -62,20 +63,35 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-sample_bkg = bkg[selection].sample(frac=1)
-sample_sig1 = sig1[selection].sample(frac=1)
-sample_sig2 = sig2[selection].sample(frac=1)
+sample_bkg = bkg[selection] #.sample(frac=1)
+sample_sig1 = sig1[selection] #.sample(frac=1)
+sample_sig2 = sig2[selection] #.sample(frac=1)
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
-sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
-sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
-train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
-test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
+# Concatenate all datasets for the current column to find the global min and max
+all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
 
-train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
-test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
+for col in smooth_cols:
+    first_positive = all_data[col][all_data[col] > 0].min()
+    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
+
+all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+
+
+# Create a MinMaxScaler object with adjusted parameters for the current column
+data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
+
+# Apply scaling to each dataset per column
+bkg_scaled = data_scaled.iloc[:len(sample_bkg)]
+sig1_scaled = data_scaled.iloc[len(sample_bkg):-len(sample_sig2)]
+sig2_scaled = data_scaled.iloc[-len(sample_sig2):]
+
+#######################################################################################################
+######################################### Data Rescaling ##############################################
+
+test_bkg = torch.from_numpy(bkg_scaled.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index]).float().to(device)
 
 #######################################################################################################
 ########################################## Histogram Analysis ############################################
@@ -86,16 +102,13 @@ input_dim = selection.size
 # Load Model
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth", map_location=device))
+model.eval()
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
     predict_bkg = model(test_bkg)
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
-
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=sig1[selection].columns)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=sig1[selection].columns)
 
 #######################################################################################################
 ############################################# Histograms ##############################################

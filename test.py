@@ -39,6 +39,7 @@ sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
 selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("../Autoencoder/scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -76,21 +77,36 @@ if scale == "minmax":
 elif scale == "standard":
     scaler = StandardScaler()
 
-sample_bkg = bkg[selection].sample(frac=1)
-sample_sig1 = sig1[selection].sample(frac=1)
-sample_sig2 = sig2[selection].sample(frac=1)
+sample_bkg = bkg[selection] #.sample(frac=1)
+sample_sig1 = sig1[selection] #.sample(frac=1)
+sample_sig2 = sig2[selection] #.sample(frac=1)
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
-sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
-sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
-train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
-test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
+# Concatenate all datasets for the current column to find the global min and max
+all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
 
-train_bkg = torch.from_numpy(train_bkg.values).float().to(device)
-test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
+for col in smooth_cols:
+    first_positive = all_data[col][all_data[col] > 0].min()
+    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
+
+all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+
+
+# Create a MinMaxScaler object with adjusted parameters for the current column
+data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
+
+# Apply scaling to each dataset per column
+bkg_scaled = data_scaled.iloc[:len(sample_bkg)]
+sig1_scaled = data_scaled.iloc[len(sample_bkg):-len(sample_sig2)]
+sig2_scaled = data_scaled.iloc[-len(sample_sig2):]
+
+#######################################################################################################
+######################################### Data Rescaling ##############################################
+
+test_bkg = torch.from_numpy(bkg_scaled.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
-weights_bkg = torch.from_numpy(weights_bkg).float().to(device)
+weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index]).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index]).float().to(device)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
@@ -101,6 +117,7 @@ input_dim = selection.size
 # Load Model
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 model.load_state_dict(torch.load(f"models/model_parameters_{scale}_{mid_dim}_{latent_dim}.pth", map_location=device))
+model.eval()
 
 # Predictions
 with torch.no_grad(): # no need to compute gradients here
@@ -108,35 +125,27 @@ with torch.no_grad(): # no need to compute gradients here
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
 
-predict_bkg_df = pd.DataFrame(scaler.inverse_transform(predict_bkg.cpu().numpy()), columns=selection)
-predict_sig1_df = pd.DataFrame(scaler.inverse_transform(predict_sig1.cpu().numpy()), columns=selection)
-predict_sig2_df = pd.DataFrame(scaler.inverse_transform(predict_sig2.cpu().numpy()), columns=selection)
-
 # Determine Reconstruction Error
-loss_bkg = pd.DataFrame()
-loss_sig1 = pd.DataFrame()
-loss_sig2 = pd.DataFrame()
 
 # MSE per feature
-for i, column in enumerate(predict_bkg_df.columns):
-    loss_bkg[column] = loss(test_bkg[:, i], predict_bkg[:, i]).numpy()
-    loss_sig1[column] = loss(test_sig1[:, i], predict_sig1[:, i]).numpy()
-    loss_sig2[column] = loss(test_sig2[:, i], predict_sig2[:, i]).numpy()
+loss_bkg = pd.DataFrame(loss(test_bkg, predict_bkg).numpy(), columns=selection)
+loss_sig1 = pd.DataFrame(loss(test_sig1, predict_sig1).numpy(), columns=selection)
+loss_sig2 = pd.DataFrame(loss(test_sig2, predict_sig2).numpy(), columns=selection)
 
 # Total MSE
-loss_bkg_total = loss_bkg.sum(axis=1) / 42
-loss_sig1_total = loss_sig1.sum(axis=1) / 42
-loss_sig2_total = loss_sig2.sum(axis=1) / 42
+loss_bkg_total = loss_bkg.mean(axis=1)
+loss_sig1_total = loss_sig1.mean(axis=1)
+loss_sig2_total = loss_sig2.mean(axis=1)
 
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0, 0.01), density=0, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0, 0.01), density=0, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0, 0.01), density=0, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0, 0.01)
+axes.set_xlim(0, 0.8)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
@@ -174,24 +183,8 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-bkg_tensor = torch.from_numpy(scaler.transform(bkg[selection])).float().to(device)
-# bkg_tensor = torch.from_numpy(bkg_scaled.values).float().to(device)
-
-# Predictions
-with torch.no_grad(): # no need to compute gradients here
-    all_bkg = model(bkg_tensor)
-
-all_bkg_df = pd.DataFrame(scaler.inverse_transform(all_bkg.cpu().numpy()), columns=selection)
-
-loss_bkg_all = pd.DataFrame()
-
-for i, column in enumerate(selection):
-    loss_bkg_all[column] = loss(bkg_tensor[:, i], all_bkg[:, i]).cpu().numpy()
-
-loss_bkg_all_total = loss_bkg_all.mean(axis=1)
-
 # Invariant mass distribution with respect to BKG anomaly score
-cumulative_sum = loss_bkg_all_total.sort_values().cumsum()
+cumulative_sum = loss_bkg_total.sort_values().cumsum()
 
 # Calculate the total sum
 total_sum = cumulative_sum.iloc[-1]
@@ -200,7 +193,7 @@ total_sum = cumulative_sum.iloc[-1]
 threshold = 0.8 * total_sum
 
 # Select values where the cumulative sum is less than or equal to the threshold
-selected_values = loss_bkg_all_total[cumulative_sum <= threshold]
+selected_values = loss_bkg_total[cumulative_sum <= threshold]
 
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
@@ -215,22 +208,70 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-nbins = 30
-fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Bkg'], stacked=True, alpha=1)
-axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
-axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
-axes.set_xlabel(r"$m_{jet_1•jet_2}$")
-axes.set_ylabel("Events")
-axes.legend()
-fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+# nbins = 30
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Bkg'], stacked=True, alpha=1)
+# axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
+# axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
+# axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+# axes.set_ylabel("Events")
+# axes.legend()
+# fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
 fig, axes = plt.subplots(figsize=(8,6))
-axes.bar(range(loss_bkg_all.columns.size), loss_bkg_all.mean().values)
+axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
-fig.legend()
 fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
+
+############################################### Mass vs Loss Distribution  ##############################################
+
+# Create a 2D histogram
+fig, axes = plt.subplots(figsize=(8, 6))
+pcm = axes.hist2d(mjj_bkg.numpy(), loss_bkg_total.values, bins=30, cmap='Blues', alpha=0.6, label='Distribution 1')
+
+# Add labels, title, and legend
+cbar = fig.colorbar(pcm[3], ax=axes, label='Counts')
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel('Reconstruction Error')
+axes.set_title('2D Histogram of Mass and Loss')
+
+# Show plot
+plt.grid(True)
+fig.savefig(f"figs/testing/massLoss_{scale}_{mid_dim}_{latent_dim}.png")
+plt.grid(False)
+
+# Make it a 1D histogram
+_, bins = np.histogram(mjj_bkg.numpy(), bins=50, range=(2700, 5000))
+
+loss_bkg_avg = []
+loss_sig1_avg = []
+loss_sig2_avg = []
+for i in range(len(bins) - 1):
+    loss_bkg_bin = loss_bkg_total[(pd.Series(mjj_bkg.numpy()) >= bins[i]) & (pd.Series(mjj_bkg.numpy()) < bins[i + 1])]
+    loss_sig1_bin = loss_sig1_total[(mjj_sig1 >= bins[i]) & (mjj_sig1 < bins[i + 1])]
+    loss_sig2_bin = loss_sig2_total[(mjj_sig2 >= bins[i]) & (mjj_sig2 < bins[i + 1])]
+
+    loss_bkg_bin_avg = np.mean(loss_bkg_bin)
+    loss_sig1_bin_avg = np.mean(loss_sig1_bin)
+    loss_sig2_bin_avg = np.mean(loss_sig2_bin)
+
+    loss_bkg_avg.append(loss_bkg_bin_avg)
+    loss_sig1_avg.append(loss_sig1_bin_avg)
+    loss_sig2_avg.append(loss_sig2_bin_avg)
+
+# Plot ROC curve
+fig, axes = plt.subplots(figsize=(8,6))
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_bkg_avg, label='Background')
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig1_avg, label='Signal 1')
+axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig2_avg, label='Signal 2')
+axes.set_xlim([2700, 5000])
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel('Reconstruction Error')
+axes.set_title('Avg Error v. Mass Distribution')
+axes.legend()
+fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
+

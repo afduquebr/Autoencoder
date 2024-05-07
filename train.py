@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from autoencoder import AutoEncoder, train, test
+from autoencoder import AutoEncoder, WeightedMSELoss, train, test
 from main import main, parse_args
 
 ####################################### GPU or CPU running ###########################################
@@ -41,6 +41,7 @@ sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
 selection = pd.read_csv(f"dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("../Autoencoder/scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -80,9 +81,27 @@ sample_bkg = bkg[selection].sample(frac=1)
 sample_sig1 = sig1[selection].sample(frac=1)
 sample_sig2 = sig2[selection].sample(frac=1)
 
-bkg_scaled = pd.DataFrame(scaler.fit_transform(sample_bkg), columns=selection)
-sig1_scaled = pd.DataFrame(scaler.transform(sample_sig1), columns=selection)
-sig2_scaled = pd.DataFrame(scaler.transform(sample_sig2), columns=selection)
+# Concatenate all datasets for the current column to find the global min and max
+all_data = pd.concat([sample_bkg, sample_sig1, sample_sig2])
+
+for col in smooth_cols:
+    first_positive = all_data[col][all_data[col] > 0].min()
+    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
+
+all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+
+
+# Create a MinMaxScaler object with adjusted parameters for the current column
+data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
+
+# Apply scaling to each dataset per column
+bkg_scaled = data_scaled.iloc[:len(sample_bkg)]
+sig1_scaled = data_scaled.iloc[len(sample_bkg):-len(sample_sig2)]
+sig2_scaled = data_scaled.iloc[-len(sample_sig2):]
+
+#######################################################################################################
+######################################## Data Rescaling ###########################################
+
 train_bkg = bkg_scaled[(sig1_scaled.shape[0]):]
 test_bkg = bkg_scaled[:(sig2_scaled.shape[0])]
 
@@ -91,12 +110,12 @@ test_bkg = torch.from_numpy(test_bkg.values).float().to(device)
 test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
 weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
+mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index][sig1_scaled.shape[0]:]).float().to(device)
 
-trainSet = TensorDataset(train_bkg, train_bkg, weights_bkg)
+trainSet = TensorDataset(train_bkg, weights_bkg, mjj_bkg)
 testSet_bkg = TensorDataset(test_bkg, test_bkg)
 testSet_sig1 = TensorDataset(test_sig1, test_sig1)
 testSet_sig2 = TensorDataset(test_sig2, test_sig2)
-
 
 #######################################################################################################
 ######################################### Model Initlization ##########################################
@@ -108,9 +127,10 @@ input_dim = selection.size
 model = AutoEncoder(input_dim = input_dim, mid_dim = mid_dim, latent_dim = latent_dim).to(device)
 
 # Hyperparameters
-N_epochs = 100 #100
+N_epochs = 100
 batch_size = 2048
 learning_rate = 0.0002
+alpha = 0.7
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -119,6 +139,7 @@ testLoader_sig1 = DataLoader(testSet_sig1, batch_size=batch_size, shuffle=True, 
 testLoader_sig2 = DataLoader(testSet_sig2, batch_size=batch_size, shuffle=True, num_workers=0)
 
 # Loss function
+# criterion = WeightedMSELoss
 loss_function = nn.MSELoss()
 
 # Optimizer
@@ -135,7 +156,7 @@ sig2Loss = []
 # Run training and store validation through training
 for epoch in range(N_epochs) :
     print("Training")
-    trainLoss.append(train(model, trainLoader, loss_function, optimizer, epoch))
+    trainLoss.append(train(model, trainLoader, WeightedMSELoss, optimizer, epoch, alpha))
     print("Validating")
     testLoss.append(test(model, testLoader_bkg, loss_function, epoch))
     print("Testing Signal 1")
@@ -149,10 +170,17 @@ torch.save(model.state_dict(), f"models/model_parameters_{scale}_{mid_dim}_{late
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
 axes.scatter(range(N_epochs), trainLoss, marker="*", s=10, label='Training loss function')
+axes.set_xlabel('N epochs',fontsize=10)
+axes.set_ylabel('Loss during Training',fontsize=10)
+axes.legend(loc='upper right',fontsize=10)
+fig.savefig(f"figs/training/train_loss_{scale}_{mid_dim}_{latent_dim}.png")
+
+# Create Loss per Epochs
+fig, axes = plt.subplots(figsize=(8,6))
 axes.scatter(range(N_epochs), testLoss, marker="^", s=8, label='Background testing loss function')
 axes.scatter(range(N_epochs), sig1Loss, marker="o", s=8, label='Signal 1 testing loss function')
 axes.scatter(range(N_epochs), sig2Loss, marker="o", s=8, label='Signal 2 testing loss function')
 axes.set_xlabel('N epochs',fontsize=10)
-axes.set_ylabel('Loss',fontsize=10)
+axes.set_ylabel('Loss during Evaluation',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
-fig.savefig(f"figs/training/loss_{scale}_{mid_dim}_{latent_dim}.png")
+fig.savefig(f"figs/training/eval_loss_{scale}_{mid_dim}_{latent_dim}.png")
