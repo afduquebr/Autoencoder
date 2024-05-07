@@ -20,27 +20,27 @@ if ! python test.py -p local -s $scale -m $middle_dim -l $latent_dim; then
 fi
 
 # Run Histogram Python script
-# echo "Plotting histograms."
-# if ! python hist.py -p local -s $scale -m $middle_dim -l $latent_dim; then
-#     echo "Error: Failed to run Histogram Python script."
-#     exit 1
-# fi
+echo "Plotting histograms."
+if ! python hist.py -p local -s $scale -m $middle_dim -l $latent_dim; then
+    echo "Error: Failed to run Histogram Python script."
+    exit 1
+fi
 
 # Update Git repository automatically
-# if ! git add .; then
-#     echo "Error: Failed to add files to Git."
-#     exit 1
-# fi
+if ! git add .; then
+    echo "Error: Failed to add files to Git."
+    exit 1
+fi
 
-# if ! git commit -m "Testing with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
-#     echo "Error: Failed to commit changes to Git."
-#     exit 1
-# fi
+if ! git commit -m "Testing with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
+    echo "Error: Failed to commit changes to Git."
+    exit 1
+fi
 
-# if ! git push; then
-#     echo "Error: Failed to push changes to Git repository."
-#     exit 1
-# fi
+if ! git push; then
+    echo "Error: Failed to push changes to Git repository."
+    exit 1
+fi
 
 # Deactivate the environment
 echo "deactivating virtual environment."
