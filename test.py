@@ -141,12 +141,12 @@ loss_sig2_total = loss_sig2.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0.01, 0.15), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_bkg_total], nbins, range=(0.01, 0.08), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0.01, 0.08), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0.01, 0.08), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0.01, 0.15)
+axes.set_xlim(0.01, 0.08)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{scale}_{mid_dim}_{latent_dim}.png")
 
