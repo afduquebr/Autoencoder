@@ -49,7 +49,7 @@ class AutoEncoder(nn.Module):
             nn.ReLU(),
             nn.Linear(mid_dim, input_dim),
             # nn.ReLU() # MinMax Scaling 
-            nn.ELU(alpha=10) # Standard Scaling
+            nn.ELU(alpha=2) # Standard Scaling
         )
 
         # Initialize decoder weights with encoder weights
