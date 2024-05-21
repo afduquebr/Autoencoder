@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import roc_curve, auc
+from scipy.spatial.distance import jensenshannon
 
 import torch
 
@@ -183,42 +184,41 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
-# Invariant mass distribution with respect to BKG anomaly score
-cumulative_sum = loss_bkg_total.sort_values().cumsum()
+# Get all the percentiles
+threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
 
-# Calculate the total sum
-total_sum = cumulative_sum.iloc[-1]
-
-# Calculate the threshold for selecting 80 percent of the values
-threshold = 0.8 * total_sum
-
-# Select values where the cumulative sum is less than or equal to the threshold
-selected_values = loss_bkg_total[cumulative_sum <= threshold]
-
+# Plot
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([bkg.mj1j2[cumulative_sum >= 0.85 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([bkg.mj1j2[cumulative_sum >= 0.5 * total_sum]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([bkg.mj1j2[loss_bkg_total > cut[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([bkg.mj1j2[loss_bkg_total > cut[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
 axes.legend()
 fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 
-############################################ Normalised Mass Distribution  ##############################################
+############################################ Jensen Shannon Distribution  ##############################################
 
-# nbins = 30
-# fig, axes = plt.subplots(figsize=(8,6))
-# axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Bkg'], stacked=True, alpha=1)
-# axes.hist([mjj_sig1], nbins, histtype='step', weights=weights_sig1, label=['Signal 1'], stacked=True, alpha=0.8)
-# axes.hist([mjj_sig2], nbins, histtype='step', weights=weights_sig2, label=['Signal 2'], stacked=True, alpha=0.6)
-# axes.set_xlabel(r"$m_{jet_1•jet_2}$")
-# axes.set_ylabel("Events")
-# axes.legend()
-# fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
+# Reference uncut histogram
+hist_ref, bins = np.histogram( bkg.mj1j2, bins=30, range=scope)
 
-############################################ Normalised Mass Distribution  ##############################################
+# Loop over percentiles
+jsd = []
+for th in threshold:
+    hist_cut, _ = np.histogram(bkg.mj1j2[loss_bkg_total > th], bins=bins, range=scope)
+    jsd.append(jensenshannon(hist_cut, hist_ref))
+
+# Plot JS Dist 
+fig, axes = plt.subplots(figsize=(8,6))
+axes.plot(np.arange(1, 100), jsd, '-', lw=1)
+axes.set_xlabel('Percentile Cut')
+axes.set_ylabel('JS Distance')
+axes.legend()
+fig.savefig(f"figs/testing/jd_dist_{scale}_{mid_dim}_{latent_dim}.png")
+
+################################################ Mean Loss per Feature  #################################################
 
 fig, axes = plt.subplots(figsize=(8,6))
 axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
@@ -228,21 +228,6 @@ axes.set_yscale("log")
 fig.savefig(f"figs/testing/error_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################### Mass vs Loss Distribution  ##############################################
-
-# Create a 2D histogram
-fig, axes = plt.subplots(figsize=(8, 6))
-pcm = axes.hist2d(mjj_bkg.numpy(), loss_bkg_total.values, bins=30, cmap='Blues', alpha=0.6, label='Distribution 1')
-
-# Add labels, title, and legend
-cbar = fig.colorbar(pcm[3], ax=axes, label='Counts')
-axes.set_xlabel(r"$m_{jet_1•jet_2}$")
-axes.set_ylabel('Reconstruction Error')
-axes.set_title('2D Histogram of Mass and Loss')
-
-# Show plot
-plt.grid(True)
-fig.savefig(f"figs/testing/massLoss_{scale}_{mid_dim}_{latent_dim}.png")
-plt.grid(False)
 
 # Make it a 1D histogram
 _, bins = np.histogram(mjj_bkg.numpy(), bins=50, range=(2700, 5000))
@@ -263,7 +248,7 @@ for i in range(len(bins) - 1):
     loss_sig1_avg.append(loss_sig1_bin_avg)
     loss_sig2_avg.append(loss_sig2_bin_avg)
 
-# Plot ROC curve
+# Plot Avg Loss v. Mass
 fig, axes = plt.subplots(figsize=(8,6))
 axes.plot(bins[:-1] + np.diff(bins) / 2, loss_bkg_avg, label='Background')
 axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig1_avg, label='Signal 1')
