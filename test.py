@@ -191,8 +191,8 @@ threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([bkg.mj1j2[loss_bkg_total > cut[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([bkg.mj1j2[loss_bkg_total > cut[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([bkg.mj1j2[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([bkg.mj1j2[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -202,7 +202,7 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
-hist_ref, bins = np.histogram( bkg.mj1j2, bins=30, range=scope)
+hist_ref, bins = np.histogram(bkg.mj1j2, bins=30, range=scope)
 
 # Loop over percentiles
 jsd = []
