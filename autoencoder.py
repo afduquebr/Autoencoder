@@ -35,9 +35,7 @@ class AutoEncoder(nn.Module):
         # layer followed by Relu activation function
         # 42 ==> 14
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 35),
-            nn.ReLU(),
-            nn.Linear(35, mid_dim),
+            nn.Linear(input_dim, mid_dim),
             nn.ReLU(),
             nn.Linear(mid_dim, latent_dim),
             nn.ReLU()
@@ -49,11 +47,9 @@ class AutoEncoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, mid_dim),
             nn.ReLU(),
-            nn.Linear(mid_dim, 35),
-            nn.ReLU(),
-            nn.Linear(35, input_dim),
-            nn.ReLU() # MinMax Scaling 
-            # nn.PReLU() # Standard Scaling
+            nn.Linear(mid_dim, input_dim),
+            # nn.ReLU() # MinMax Scaling 
+            nn.PReLU() # Standard Scaling
         )
 
         # Initialize decoder weights with encoder weights
