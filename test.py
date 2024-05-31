@@ -100,6 +100,8 @@ bkg_scaled = data_scaled.iloc[:len(sample_bkg)]
 sig1_scaled = data_scaled.iloc[len(sample_bkg):-len(sample_sig2)]
 sig2_scaled = data_scaled.iloc[-len(sample_sig2):]
 
+test_scaled = pd.concat([bkg_scaled.iloc[:100000], sig1_scaled.iloc[:300]])
+
 #######################################################################################################
 ######################################### Data Rescaling ##############################################
 
@@ -108,6 +110,9 @@ test_sig1 = torch.from_numpy(sig1_scaled.values).float().to(device)
 test_sig2 = torch.from_numpy(sig2_scaled.values).float().to(device)
 weights_bkg = torch.from_numpy(weights_bkg[sample_bkg.index]).float().to(device)
 mjj_bkg = torch.from_numpy(mjj_bkg[sample_bkg.index]).float().to(device)
+
+test = torch.from_numpy(test_scaled.values).float().to(device)
+
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
@@ -126,6 +131,8 @@ with torch.no_grad(): # no need to compute gradients here
     predict_sig1 = model(test_sig1)
     predict_sig2 = model(test_sig2)
 
+    predict_test = model(test)
+
 # Determine Reconstruction Error
 
 # MSE per feature
@@ -133,17 +140,23 @@ loss_bkg = pd.DataFrame(loss(test_bkg, predict_bkg).numpy(), columns=selection)
 loss_sig1 = pd.DataFrame(loss(test_sig1, predict_sig1).numpy(), columns=selection)
 loss_sig2 = pd.DataFrame(loss(test_sig2, predict_sig2).numpy(), columns=selection)
 
+loss_test = pd.DataFrame(loss(test, predict_test).numpy(), columns=selection)
+
 # Total MSE
 loss_bkg_total = loss_bkg.mean(axis=1)
 loss_sig1_total = loss_sig1.mean(axis=1)
 loss_sig2_total = loss_sig2.mean(axis=1)
 
+loss_test_total = loss_test.mean(axis=1)
+
+
 # Plot Total Reconstruction Error
 nbins = 20
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_bkg_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
-axes.hist([loss_sig1_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-axes.hist([loss_sig2_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+axes.hist([loss_test_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+# axes.hist([loss_bkg_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+# axes.hist([loss_sig1_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+# axes.hist([loss_sig2_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
 axes.set_xlim(0, 0.8)
@@ -168,10 +181,19 @@ loss_total2 = pd.DataFrame({'Loss': loss_total2, 'Label': labels2})
 fpr2, tpr2, thresholds2 = roc_curve(loss_total2["Label"], loss_total2["Loss"])
 roc_auc2 = auc(fpr2, tpr2)
 
+# TEST ROC
+loss_total3 = loss_test_total.copy()
+labels3 = pd.Series([0]*100000 + [1]*300)
+loss_total3 = pd.DataFrame({'Loss': loss_total3, 'Label': labels3})
+
+fpr3, tpr3, thresholds3 = roc_curve(loss_total3["Label"], loss_total3["Loss"])
+roc_auc3 = auc(fpr3, tpr3)
+
 # Plot ROC curve
 fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(fpr1, tpr1, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc1)
-axes.plot(fpr2, tpr2, lw=2, label='Signal 2 ROC curve (AUC = %0.2f)' % roc_auc2)
+axes.plot(fpr3, tpr3, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc3)
+# axes.plot(fpr1, tpr1, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc1)
+# axes.plot(fpr2, tpr2, lw=2, label='Signal 2 ROC curve (AUC = %0.2f)' % roc_auc2)
 axes.plot([0, 1], [0, 1], lw=2, linestyle='--')
 axes.set_xlim([0.0, 1.0])
 axes.set_ylim([0.0, 1.05])
@@ -184,15 +206,21 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 
 ############################################ Normalised Mass Distribution  ##############################################
 
+mjj_test = np.concatenate((mjj_bkg[:100000], mjj_sig1[:300]))
+
 # Get all the percentiles
-threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
+# threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
+threshold = np.percentile(loss_test_total, np.arange(1, 100))
 
 # Plot
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([bkg.mj1j2[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([bkg.mj1j2[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+# axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+# axes.hist([bkg.mj1j2[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+# axes.hist([bkg.mj1j2[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([mjj_test], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+axes.hist([mjj_test[loss_test_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([mjj_test[loss_test_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -202,12 +230,14 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
-hist_ref, bins = np.histogram(bkg.mj1j2, bins=30, range=scope)
+# hist_ref, bins = np.histogram(bkg.mj1j2, bins=30, range=scope)
+hist_ref, bins = np.histogram(mjj_test, bins=30, range=scope)
 
 # Loop over percentiles
 jsd = []
 for th in threshold:
-    hist_cut, _ = np.histogram(bkg.mj1j2[loss_bkg_total > th], bins=bins, range=scope)
+    # hist_cut, _ = np.histogram(bkg.mj1j2[loss_bkg_total > th], bins=bins, range=scope)
+    hist_cut, _ = np.histogram(mjj_test[loss_test_total > th], bins=bins, range=scope)
     jsd.append(jensenshannon(hist_cut, hist_ref))
 
 # Plot JS Dist 
@@ -221,7 +251,8 @@ fig.savefig(f"figs/testing/jd_dist_{scale}_{mid_dim}_{latent_dim}.png")
 ################################################ Mean Loss per Feature  #################################################
 
 fig, axes = plt.subplots(figsize=(8,6))
-axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
+# axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
+axes.bar(range(loss_test.columns.size), loss_test.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
