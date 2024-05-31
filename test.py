@@ -151,12 +151,12 @@ loss_test_total = loss_test.mean(axis=1)
 
 
 # Plot Total Reconstruction Error
-nbins = 20
+nbins = 40
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_test_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
-# axes.hist([loss_bkg_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
-# axes.hist([loss_sig1_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
-# axes.hist([loss_sig2_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
+# axes.hist([loss_test_total], nbins, range=(0, 0.8), density=1, histtype='step', stacked=True, alpha=1)
+axes.hist([loss_bkg_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
+axes.hist([loss_sig1_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 1'], stacked=True, alpha=0.9)
+axes.hist([loss_sig2_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal 2'], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
 axes.set_xlim(0, 0.8)
@@ -191,7 +191,7 @@ roc_auc3 = auc(fpr3, tpr3)
 
 # Plot ROC curve
 fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(fpr3, tpr3, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc3)
+axes.plot(fpr3, tpr3, lw=2, label='ROC curve (AUC = %0.2f)' % roc_auc3)
 # axes.plot(fpr1, tpr1, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc1)
 # axes.plot(fpr2, tpr2, lw=2, label='Signal 2 ROC curve (AUC = %0.2f)' % roc_auc2)
 axes.plot([0, 1], [0, 1], lw=2, linestyle='--')
