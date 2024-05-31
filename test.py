@@ -259,3 +259,14 @@ axes.set_ylabel('Reconstruction Error')
 axes.set_title('Avg Error v. Mass Distribution')
 axes.legend()
 fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
+
+
+#########
+
+nbins = 50
+fig, axes = plt.subplots(figsize=(8,6))
+axes.hist([mjj_bkg], nbins, histtype='step', weights=weights_bkg.cpu().numpy(), label=['Background'], stacked=True, alpha=1)
+axes.set_xlabel(r"$m_{jet_1•jet_2}$")
+axes.set_ylabel("Events")
+axes.legend()
+fig.savefig(f"figs/testing/normalised_mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
