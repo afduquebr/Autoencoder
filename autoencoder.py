@@ -36,9 +36,9 @@ class AutoEncoder(nn.Module):
         # 42 ==> 14
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, mid_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(mid_dim, latent_dim),
-            nn.ReLU()
+            nn.LeakyReLU()
         )
         
         # Building an linear decoder with Linear
@@ -46,7 +46,7 @@ class AutoEncoder(nn.Module):
         # 14 ==> 42
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, mid_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(mid_dim, input_dim),
             # nn.ReLU() # MinMax Scaling 
             nn.PReLU() # Standard Scaling

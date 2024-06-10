@@ -16,12 +16,13 @@ fi
 cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
-scale="minmax"
+path="server"
+scale="standard"
 middle_dim="21"
 latent_dim="14" 
 
 # Run Training Python script
-if ! python train.py -p server -s $scale -m $middle_dim -l $latent_dim; then
+if ! python train.py -p $path -s $scale -m $middle_dim -l $latent_dim; then
     echo "Error: Failed to run Python script."
     exit 1
 fi
