@@ -9,7 +9,6 @@ Created on Apr 16 2024
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler 
 from sklearn.preprocessing import StandardScaler 
 
 import torch
@@ -41,8 +40,8 @@ sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 bbox = pd.read_hdf(f"{path}/BBOX1_2j_scalars_sig.h5")
 
-selection = pd.read_csv(f"dijet-selection.csv", header=None).values[:, 0]
-smooth_cols = pd.read_csv("../Autoencoder/scale-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -158,7 +157,7 @@ for epoch in range(N_epochs) :
     sigLoss.append(test(model, testLoader_sig, loss_function, epoch))
 
 # Save model
-torch.save(model.state_dict(), f"models/model_parameters_{signal}_{pct*100}.pth")
+torch.save(model.state_dict(), f"models/model_parameters_{signal}_{int(pct*100)}.pth")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -167,7 +166,7 @@ axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Training',fontsize=14)
-fig.savefig(f"figs/training/train_loss_{signal}_{pct*100}.png")
+fig.savefig(f"figs/training/train_loss_{signal}_{int(pct*100)}.png")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -177,4 +176,4 @@ axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Evaluation',fontsize=14)
-fig.savefig(f"figs/training/eval_loss_{signal}_{pct*100}.png")
+fig.savefig(f"figs/training/eval_loss_{signal}_{int(pct*100)}.png")
