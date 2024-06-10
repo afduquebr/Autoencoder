@@ -61,7 +61,7 @@ bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index()
 
 if signal != None:
     sample_sig = globals()[signal].sample(frac=1)
-    sample = pd.concat([bkg, sample_sig[:(pct * len(bkg))]]).sample(frac=1)
+    sample = pd.concat([bkg, sample_sig[:int(pct * len(bkg))]]).sample(frac=1)
 else:
     signal = "sig1"
     pct = 0
