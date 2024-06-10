@@ -125,7 +125,7 @@ with torch.no_grad(): # no need to compute gradients here
 #######################################################################################################
 ############################################# Histograms ##############################################
 
-directory = f"figs/histograms/{signal}/anomaly_{int(pct*100)}"
+directory = f"figs/histograms/{signal}/{int(pct*100)}"
 
 if not os.path.exists(directory):
     os.makedirs(directory)

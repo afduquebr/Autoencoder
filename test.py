@@ -202,7 +202,7 @@ fig, axes = plt.subplots(figsize=(8,6))
 axes.plot(np.arange(1, 100), jsd, '-', lw=1)
 axes.set_xlabel('Percentile Cut')
 axes.set_ylabel('JS Distance')
-axes.legend()
+# axes.legend()
 fig.savefig(f"figs/testing/jd_dist_{signal}_{int(pct*100)}.png")
 
 ################################################ Mean Loss per Feature  #################################################
