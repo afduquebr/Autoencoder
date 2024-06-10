@@ -17,11 +17,12 @@ cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
 path="server"
-dataset="sig1"
-anomaly="0.05"
+scale="standard"
+middle_dim="21"
+latent_dim="14" 
 
 # Run Training Python script
-if ! python train.py -p $path -d $dataset -a $anomaly; then
+if ! python previous/train.py -p $path -s $scale -m $middle_dim -l $latent_dim; then
     echo "Error: Failed to run Python script."
     exit 1
 fi
@@ -32,7 +33,7 @@ if ! git add .; then
     exit 1
 fi
 
-if ! git commit -m "Training with $dataset insertion and percentage $anomaly"; then
+if ! git commit -m "Training with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
     echo "Error: Failed to commit changes to Git."
     exit 1
 fi

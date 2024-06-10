@@ -3,54 +3,44 @@ import sys
 
 def parse_args():
     path = None
-    scale = None
-    middle = None
-    latent = None
+    dataset = None
+    anomaly = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "p:s:m:l:", ["path=","scale=", "middle=", "latent="])
+        opts, args = getopt.getopt(sys.argv[1:], "p:d:a:", ["path=", "dataset=", "anomaly="])
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
 
     for opt, arg in opts:
         if opt in ("-p", "--path"):
-            if arg not in ["local", "server"]:
-                raise ValueError("Scaling must be either 'local' or 'server'.")
+            if arg not in ["local", "server", None]:
+                raise ValueError("Path must be either 'local' or 'server'.")
             path = arg
-        elif opt in ("-s", "--scale"):
-            if arg not in ["minmax", "standard"]:
-                raise ValueError("Scaling must be either 'minmax' or 'standard'.")
-            scale = arg
-        elif opt in ("-m", "--middle"):
-            try:
-                middle = int(arg)
-            except ValueError:
-                raise ValueError("Middle layer dimension must be an integer.")
-        elif opt in ("-l", "--latent"):
-            try:
-                latent = int(arg)
-            except ValueError:
-                raise ValueError("Latent space dimension must be an integer.")
+        elif opt in ("-d", "--dataset"):
+            if arg not in ["sig1", "sig2", "bbox", None]:
+                raise ValueError("Dataset must be either 'sig1', 'sig2' or 'bbox'.")
+            dataset = arg
+        elif opt in ("-a", "--anomaly"):
+            if arg != None:
+                try:
+                    anomaly = float(arg)
+                except ValueError:
+                    raise ValueError("Anomaly percentage must be between 0 and 0.1.")
 
-    if path is None:
+    if path == None:
         raise ValueError("Path option is required")
-    if scale is None:
-        raise ValueError("Scale option is required")
-    if middle is None:
-        raise ValueError("Middle option is required")
-    if latent is None:
-        raise ValueError("Latent option is required")
+    if anomaly == None and dataset != None:
+        raise ValueError("Anomaly percentage option is required")
 
-    return path, scale, middle, latent
+    return path, dataset, anomaly
 
 def main():
     try:
-        path, model, middle, latent = parse_args()
+        path, dataset, anomaly = parse_args()
         print("Path: ", path)
-        print("Model: ", model)
-        print("Middle layer dimension: ", middle)
-        print("Latent space dimension: ", latent)
+        print("Signal Dataset: ", dataset)
+        print("Anomaly percentage: ", anomaly)
     except ValueError as err:
         print("Error:", err)
         sys.exit(1)

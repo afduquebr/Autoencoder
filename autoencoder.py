@@ -32,21 +32,21 @@ class AutoEncoder(nn.Module):
     def __init__(self, input_dim = 42, mid_dim = 21, latent_dim = 14):
         super(AutoEncoder, self).__init__()
         # Building an linear encoder with Linear
-        # layer followed by Relu activation function
+        # layer followed by ReLU activation function
         # 42 ==> 14
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, mid_dim),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(mid_dim, latent_dim),
-            nn.GELU()
+            nn.ReLU()
         )
         
         # Building an linear decoder with Linear
-        # layer followed by Relu activation function
+        # layer followed by ReLU activation function
         # 14 ==> 42
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, mid_dim),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(mid_dim, input_dim),
             # nn.ReLU() # MinMax Scaling 
             nn.PReLU() # Standard Scaling

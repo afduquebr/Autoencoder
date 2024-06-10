@@ -24,19 +24,20 @@ cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for testing
 path="server"
-dataset="sig1"
-anomaly="0.05"
+scale="standard"
+middle_dim="21"
+latent_dim="14" 
 
 # Run Testing Python script
 echo "Running test."
-if ! python test.py -p $path -d $dataset -a $anomaly; then
+if ! python previous/test.py -p $path -s $scale -m $middle_dim -l $latent_dim; then
     echo "Error: Failed to run Testing Python script."
     exit 1
 fi
 
 # Run Histogram Python script
 echo "Plotting histograms."
-if ! python hist.py -p $path -d $dataset -a $anomaly; then
+if ! python previous/hist.py -p $path -s $scale -m $middle_dim -l $latent_dim; then
     echo "Error: Failed to run Histogram Python script."
     exit 1
 fi
@@ -47,7 +48,7 @@ if ! git add .; then
     exit 1
 fi
 
-if ! git commit -m "Testing with $dataset insertion and percentage $anomaly"; then
+if ! git commit -m "Testing with $scale scaling and $middle_dim, $latent_dim layer dimensions"; then
     echo "Error: Failed to commit changes to Git."
     exit 1
 fi
