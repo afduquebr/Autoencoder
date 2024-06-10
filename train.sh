@@ -27,7 +27,7 @@ if ! python train.py -p $path -d $dataset -a $anomaly; then
 fi
 
 # Update Git repository automatically
-if ! git add .; then
+if ! git add -A; then
     echo "Error: Failed to add files to Git."
     exit 1
 fi

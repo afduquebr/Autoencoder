@@ -10,12 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import StandardScaler 
-from sklearn.metrics import roc_curve, auc
-from scipy.spatial.distance import jensenshannon
-
 import torch
+import os
 
-from autoencoder import AutoEncoder, loss
+from autoencoder import AutoEncoder
 from main import main, parse_args
 
 ####################################### GPU or CPU running ###########################################

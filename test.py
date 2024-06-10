@@ -178,8 +178,8 @@ threshold = np.percentile(loss_sample_total, np.arange(1, 100))
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.8)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[95 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['95%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -217,7 +217,7 @@ fig.savefig(f"figs/testing/error_{signal}_{int(pct*100)}.png")
 ############################################### Mass vs Loss Distribution  ##############################################
 
 # Make it a 1D histogram
-_, bins = np.histogram(mjj_sample[:100000].numpy(), bins=50, range=(2700, 5000))
+_, bins = np.histogram(mjj_sample[:100000], bins=50, range=(2700, 5000))
 
 loss_sample_avg = []
 loss_sig_avg = []
