@@ -191,9 +191,9 @@ roc_auc3 = auc(fpr3, tpr3)
 
 # Plot ROC curve
 fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(fpr3, tpr3, lw=2, label='ROC curve (AUC = %0.2f)' % roc_auc3)
-# axes.plot(fpr1, tpr1, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc1)
-# axes.plot(fpr2, tpr2, lw=2, label='Signal 2 ROC curve (AUC = %0.2f)' % roc_auc2)
+# axes.plot(fpr3, tpr3, lw=2, label='ROC curve (AUC = %0.2f)' % roc_auc3)
+axes.plot(fpr1, tpr1, lw=2, label='Signal 1 ROC curve (AUC = %0.2f)' % roc_auc1)
+axes.plot(fpr2, tpr2, lw=2, label='Signal 2 ROC curve (AUC = %0.2f)' % roc_auc2)
 axes.plot([0, 1], [0, 1], lw=2, linestyle='--')
 axes.set_xlim([0.0, 1.0])
 axes.set_ylim([0.0, 1.05])
@@ -209,18 +209,18 @@ fig.savefig(f"figs/testing/ROC_{scale}_{mid_dim}_{latent_dim}.png")
 mjj_test = np.concatenate((mjj_bkg[:100000], mjj_sig1[:300]))
 
 # Get all the percentiles
-# threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
-threshold = np.percentile(loss_test_total, np.arange(1, 100))
+threshold = np.percentile(loss_bkg_total, np.arange(1, 100))
+# threshold = np.percentile(loss_test_total, np.arange(1, 100))
 
 # Plot
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-# axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-# axes.hist([bkg.mj1j2[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-# axes.hist([bkg.mj1j2[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
-axes.hist([mjj_test], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([mjj_test[loss_test_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([mjj_test[loss_test_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([bkg.mj1j2], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+axes.hist([bkg.mj1j2[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([bkg.mj1j2[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+# axes.hist([mjj_test], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+# axes.hist([mjj_test[loss_test_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+# axes.hist([mjj_test[loss_test_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -236,8 +236,8 @@ hist_ref, bins = np.histogram(mjj_test, bins=30, range=scope)
 # Loop over percentiles
 jsd = []
 for th in threshold:
-    # hist_cut, _ = np.histogram(bkg.mj1j2[loss_bkg_total > th], bins=bins, range=scope)
-    hist_cut, _ = np.histogram(mjj_test[loss_test_total > th], bins=bins, range=scope)
+    hist_cut, _ = np.histogram(bkg.mj1j2[loss_bkg_total > th], bins=bins, range=scope)
+    # hist_cut, _ = np.histogram(mjj_test[loss_test_total > th], bins=bins, range=scope)
     jsd.append(jensenshannon(hist_cut, hist_ref))
 
 # Plot JS Dist 
@@ -251,8 +251,8 @@ fig.savefig(f"figs/testing/jd_dist_{scale}_{mid_dim}_{latent_dim}.png")
 ################################################ Mean Loss per Feature  #################################################
 
 fig, axes = plt.subplots(figsize=(8,6))
-# axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
-axes.bar(range(loss_test.columns.size), loss_test.mean().values)
+axes.bar(range(loss_bkg.columns.size), loss_bkg.mean().values)
+# axes.bar(range(loss_test.columns.size), loss_test.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")

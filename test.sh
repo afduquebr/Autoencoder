@@ -1,11 +1,26 @@
 #!/bin/bash
 
 # Source and activate environment
-echo "Activating virtual environment."
-if ! source .venv/bin/activate; then
-    echo "Error: Failed to activate environment."
+# echo "Activating virtual environment."
+# if ! source .venv/bin/activate; then
+#     echo "Error: Failed to activate environment."
+#     exit 1
+# fi
+
+# Source Conda environment
+source /atlas/tools/anaconda/anaconda3/etc/profile.d/conda.sh
+
+# Define the name of the Conda environment
+conda_env="/AtlasDisk/home2/duquebran/Autoencoder/.venv"
+
+# Activate the Conda environment
+if ! conda activate $conda_env; then
+    echo "Error: Failed to activate Conda environment."
     exit 1
 fi
+
+# Go to directory
+cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for testing
 path="server"
