@@ -1,6 +1,6 @@
 #######################################################################################################
 """
-Created on Apr 16 2024
+Created on Jun 10 2024
 
 @author: Andres Felipe DUQUE BRAN
 """
@@ -137,7 +137,6 @@ loss_sig_total = loss_sig.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 40
 fig, axes = plt.subplots(figsize=(8,6))
-# axes.hist([loss_test_total], nbins, range=(0, 0.8), density=1, histtype='step', stacked=True, alpha=1)
 axes.hist([loss_sample_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Background'], stacked=True, alpha=1)
 axes.hist([loss_sig_total], nbins, range=(0, 0.8), density=1, histtype='step', label=['Signal: ' + signal], stacked=True, alpha=0.9)
 axes.set_xlabel(r"Reconstruction Error")
@@ -178,9 +177,9 @@ threshold = np.percentile(loss_sample_total, np.arange(1, 100))
 # Plot
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([mjj_sample], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
-axes.hist([mjj_sample[loss_bkg_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
-axes.hist([mjj_sample[loss_bkg_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
+axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=0.8)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.6)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -190,12 +189,12 @@ fig.savefig(f"figs/testing/mass_dist_{signal}_{int(pct*100)}.png")
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
-hist_ref, bins = np.histogram(mjj_sample, bins=30, range=scope)
+hist_ref, bins = np.histogram(mjj_sample[:100000], bins=30, range=scope)
 
 # Loop over percentiles
 jsd = []
 for th in threshold:
-    hist_cut, _ = np.histogram(mjj_sample[loss_sample_total > th], bins=bins, range=scope)
+    hist_cut, _ = np.histogram(mjj_sample[:100000][loss_sample_total > th], bins=bins, range=scope)
     jsd.append(jensenshannon(hist_cut, hist_ref))
 
 # Plot JS Dist 
@@ -218,13 +217,13 @@ fig.savefig(f"figs/testing/error_{signal}_{int(pct*100)}.png")
 ############################################### Mass vs Loss Distribution  ##############################################
 
 # Make it a 1D histogram
-_, bins = np.histogram(mjj_sample.numpy(), bins=50, range=(2700, 5000))
+_, bins = np.histogram(mjj_sample[:100000].numpy(), bins=50, range=(2700, 5000))
 
 loss_sample_avg = []
 loss_sig_avg = []
 
 for i in range(len(bins) - 1):
-    loss_sample_bin = loss_sample_total[(pd.Series(mjj_sample.numpy()) >= bins[i]) & (pd.Series(mjj_sample.numpy()) < bins[i + 1])]
+    loss_sample_bin = loss_sample_total[(mjj_sample[:100000] >= bins[i]) & (mjj_sample[:100000] < bins[i + 1])]
     loss_sig_bin = loss_sig_total[(mjj_sig >= bins[i]) & (mjj_sig < bins[i + 1])]
 
     loss_sample_bin_avg = np.mean(loss_sample_bin)
@@ -242,7 +241,7 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel('Reconstruction Error')
 axes.set_title('Avg Error v. Mass Distribution')
 axes.legend()
-fig.savefig(f"figs/testing/AvgLossMass_{scale}_{mid_dim}_{latent_dim}.png")
+fig.savefig(f"figs/testing/AvgLossMass_{signal}_{int(pct*100)}.png")
 
 
 #########

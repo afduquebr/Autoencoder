@@ -35,11 +35,11 @@ if ! python test.py -p $path -d $dataset -a $anomaly; then
 fi
 
 # Run Histogram Python script
-echo "Plotting histograms."
-if ! python hist.py -p $path -d $dataset -a $anomaly; then
-    echo "Error: Failed to run Histogram Python script."
-    exit 1
-fi
+# echo "Plotting histograms."
+# if ! python hist.py -p $path -d $dataset -a $anomaly; then
+#     echo "Error: Failed to run Histogram Python script."
+#     exit 1
+# fi
 
 # Update Git repository automatically
 if ! git add .; then
