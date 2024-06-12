@@ -127,7 +127,7 @@ model = AutoEncoder(input_dim = input_dim).to(device)
 N_epochs = 100
 batch_size = 2048
 learning_rate = 0.0002
-alpha = 0.9
+alpha = 10
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
