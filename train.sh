@@ -17,8 +17,8 @@ cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
 path="server"
-dataset="bbox"
-anomaly="0.05"
+dataset="sig1"
+anomaly="0.005"
 
 # Run Training Python script
 if ! python train.py -p $path -d $dataset -a $anomaly; then
