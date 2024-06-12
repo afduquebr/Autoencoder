@@ -39,8 +39,8 @@ bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
 sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
-selection = pd.read_csv("../dijet-selection.csv", header=None).values[:, 0]
-smooth_cols = pd.read_csv("../scale-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
@@ -230,8 +230,8 @@ fig.savefig(f"figs/testing/mass_dist_{scale}_{mid_dim}_{latent_dim}.png")
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
-# hist_ref, bins = np.histogram(bkg.mj1j2, bins=30, range=scope)
-hist_ref, bins = np.histogram(mjj_test, bins=30, range=scope)
+hist_ref, bins = np.histogram(bkg.mj1j2, bins=30, range=scope)
+# hist_ref, bins = np.histogram(mjj_test, bins=30, range=scope)
 
 # Loop over percentiles
 jsd = []

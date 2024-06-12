@@ -40,8 +40,8 @@ bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
 sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
 sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
 
-selection = pd.read_csv(f"../dijet-selection.csv", header=None).values[:, 0]
-smooth_cols = pd.read_csv("../scale-selection.csv", header=None).values[:, 0]
+selection = pd.read_csv(f"sdijet-selection.csv", header=None).values[:, 0]
+smooth_cols = pd.read_csv("sscale-selection.csv", header=None).values[:, 0]
 
 bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
