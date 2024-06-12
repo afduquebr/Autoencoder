@@ -186,6 +186,18 @@ axes.set_xlim(2700, 5000)
 axes.legend()
 fig.savefig(f"figs/testing/mass_dist_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
+# Plot
+nbins = 30
+fig, axes = plt.subplots(figsize=(8,6))
+axes.hist([loss_sample_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['No selection'], stacked=True, alpha=0.6)
+axes.hist([loss_sample_total[loss_sample_total > threshold[50 - 1]]], nbins, range=(0, 1.5), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.8)
+axes.hist([loss_sample_total[loss_sample_total > threshold[99 - 1]]], nbins, range=(0, 1.5), density=1, histtype='step', label=['99%'], stacked=True, alpha=1)
+axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
+axes.set_ylabel("Events")
+axes.set_xlim(0, 1.5)
+axes.legend()
+fig.savefig(f"figs/testing/loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
+
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
