@@ -116,7 +116,7 @@ input_dim = selection.size
 
 # Load Model
 model = AutoEncoder(input_dim = input_dim).to(device)
-model.load_state_dict(torch.load(f"models/model_parameters_{signal}_{int(pct*100)}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
 model.eval()
 
 # Predictions
@@ -143,7 +143,7 @@ axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
 axes.set_xlim(0, 0.8)
 axes.legend(loc='upper right')
-fig.savefig(f"figs/testing/reconstruction_error_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/reconstruction_error_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 ############################################ ROC Curve ##############################################
 
@@ -166,7 +166,7 @@ axes.set_xlabel('False Positive Rate')
 axes.set_ylabel('True Positive Rate')
 axes.set_title('Receiver Operating Characteristic (ROC) Curve')
 axes.legend(loc="lower right")
-fig.savefig(f"figs/testing/ROC_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/ROC_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 
 ############################################ Normalised Mass Distribution  ##############################################
@@ -177,14 +177,14 @@ threshold = np.percentile(loss_sample_total, np.arange(1, 100))
 # Plot
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=1)
+axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=0.6)
 axes.hist([mjj_sample[:100000][loss_sample_total > threshold[50 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['50%'], stacked=True, alpha=0.8)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[95 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['95%'], stacked=True, alpha=0.6)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[99 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['99%'], stacked=True, alpha=1)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
 axes.legend()
-fig.savefig(f"figs/testing/mass_dist_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/mass_dist_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 ############################################ Jensen Shannon Distribution  ##############################################
 
@@ -203,7 +203,7 @@ axes.plot(np.arange(1, 100), jsd, '-', lw=1)
 axes.set_xlabel('Percentile Cut')
 axes.set_ylabel('JS Distance')
 # axes.legend()
-fig.savefig(f"figs/testing/jd_dist_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/jd_dist_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 ################################################ Mean Loss per Feature  #################################################
 
@@ -212,7 +212,7 @@ axes.bar(range(loss_sample.columns.size), loss_sample.mean().values)
 axes.set_xlabel("Features")
 axes.set_ylabel("Reconstruction error")
 axes.set_yscale("log")
-fig.savefig(f"figs/testing/error_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/error_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 ############################################### Mass vs Loss Distribution  ##############################################
 
@@ -241,7 +241,7 @@ axes.set_xlabel(r"$m_{jet_1•jet_2}$")
 axes.set_ylabel('Reconstruction Error')
 axes.set_title('Avg Error v. Mass Distribution')
 axes.legend()
-fig.savefig(f"figs/testing/AvgLossMass_{signal}_{int(pct*100)}.png")
+fig.savefig(f"figs/testing/AvgLossMass_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 
 #########

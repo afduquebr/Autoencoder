@@ -114,7 +114,7 @@ input_dim = selection.size
 
 # Load Model
 model = AutoEncoder(input_dim = input_dim).to(device)
-model.load_state_dict(torch.load(f"models/model_parameters_{signal}_{int(pct*100)}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
 model.eval()
 
 # Predictions

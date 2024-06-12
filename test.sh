@@ -25,7 +25,7 @@ cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 # Define variables for testing
 path="server"
 dataset="bbox"
-anomaly="0.05"
+anomaly="0.005"
 
 # Run Testing Python script
 echo "Running test."
