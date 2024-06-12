@@ -17,7 +17,7 @@ cd /AtlasDisk/home2/duquebran/Autoencoder/ || exit
 
 # Define variables for training
 path="server"
-dataset="sig1"
+dataset="sig2"
 anomaly="0.005"
 
 # Run Training Python script
