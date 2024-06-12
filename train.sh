@@ -21,8 +21,7 @@ dataset="sig1"
 anomaly="0.005"
 
 # Run Training Python script
-# if ! python train.py -p $path -d $dataset -a $anomaly; then
-if ! python train.py -p $path; then
+if ! python train.py -p $path -d $dataset -a $anomaly; then
     echo "Error: Failed to run Python script."
     exit 1
 fi
