@@ -198,6 +198,7 @@ fig, axes = plt.subplots(figsize=(8,6))
 axes.plot(np.arange(1, 100), jsd, '-', lw=1)
 axes.set_xlabel('Percentile Cut')
 axes.set_ylabel('JS Distance')
+axes.set_xlim(80,100)
 # axes.legend()
 fig.savefig(f"figs/testing/jd_dist_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
