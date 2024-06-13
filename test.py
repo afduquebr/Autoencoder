@@ -134,7 +134,7 @@ nbins = 40
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([loss_sample_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Data'], stacked=True, alpha=1)
 axes.hist([loss_bkg_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Background'], stacked=True, alpha=0.9)
-axes.hist([loss_sig_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Signal: ' + signal], stacked=True, alpha=0.8)
+axes.hist([loss_sig_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Signal'], stacked=True, alpha=0.8)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
 axes.set_xlim(0, 1.5)
