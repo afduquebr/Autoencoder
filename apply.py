@@ -144,8 +144,8 @@ BH = bh.BumpHunter1D(
     npe = 40000,
     bins = 40,
     nworker = 4,
-    # use_sideband = True,
-    # sideband_width = [6, 4],
+    use_sideband = True,
+    sideband_width = 4,
     seed = 500
 )
 
