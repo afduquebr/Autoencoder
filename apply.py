@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import roc_curve, auc
 from scipy.spatial.distance import jensenshannon
-import pyBumpHunter as bh
+from bumphunter_1dim import BumpHunter1D
 
 import torch
 
@@ -136,7 +136,7 @@ print(f'    new S/B : {100 * sbr:.2f}%')
 #######################################################################################################
 ############################################# Analysis ################################################
 
-BH = bh.BumpHunter1D(
+BH = BumpHunter1D(
     rang=scope,
     width_min = 1,
     width_max = 6,
