@@ -28,7 +28,7 @@ dataset="sig1"
 anomaly="0.005"
 
 # Run Testing Python script
-echo "Running test."
+echo "Running BumpHunter algorithm."
 if ! python apply.py -p $path -d $dataset -a $anomaly; then
     echo "Error: Failed to run Applying BumpHunter Python script."
     exit 1
