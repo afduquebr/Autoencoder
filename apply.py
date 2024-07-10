@@ -119,7 +119,7 @@ with torch.no_grad(): # no need to compute gradients here
 loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=selection).mean(axis=1)
 
 # Do the selection at Nth percentile
-percentile = 90
+percentile = 98
 cut = np.percentile(loss_sample, percentile)
 mjj_cut = mjj[loss_sample > cut]
 print(f'    post cut stat : {mjj_cut.size}')
@@ -142,7 +142,7 @@ BH = bh.BumpHunter1D(
     width_max = 6,
     width_step = 1,
     scan_step = 1,
-    npe = 40000,
+    npe = 1000,
     bins = 40,
     nworker = 4,
     use_sideband = True,
