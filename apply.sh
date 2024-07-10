@@ -52,7 +52,7 @@ fi
 
 # Deactivate the environment
 echo "deactivating virtual environment."
-if ! deactivate; then
+if ! conda deactivate; then
     echo "Error: Failed to deactivate environment."
     exit 1
 fi
