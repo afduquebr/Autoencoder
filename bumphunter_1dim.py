@@ -1980,11 +1980,6 @@ class BumpHunter1D:
         """
 
         # Check if we are in multi_chan
-        ###########
-        print(f"size = {self.res_ar.size}")
-        print(f"shape = {self.res_ar.shape}")
-        print(f"ndim = {self.res_ar.ndim}")
-        ###########
         if self.res_ar.size > 0 and self.res_ar.ndim == 2:
             multi_chan = True
         else:
