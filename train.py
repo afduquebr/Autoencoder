@@ -89,9 +89,9 @@ all_data = pd.concat([sample[selection], sample_sig[selection]])
 
 for col in smooth_cols:
     first_positive = all_data[col][all_data[col] > 0].min()
-    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
+    all_data.loc[all_data[col] <= 0, col] = first_positive
 
-all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+all_data.loc[:, smooth_cols] = all_data.loc[:, smooth_cols].apply(lambda x: np.log(x))
 
 # Create a Scaler object with adjusted parameters for each column
 scaler = StandardScaler()

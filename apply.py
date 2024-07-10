@@ -59,16 +59,16 @@ bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index()
 # Mix signal or bbox with bkg
 
 if signal != None:
-    sample_bkg = bkg.sample(frac=1)
-    sample_sig = globals()[signal].sample(frac=1)
-    sample = pd.concat([sample_bkg, sample_sig[:int(pct * len(bkg))]])
-    sample['labels'] = pd.Series([0]*len(sample_bkg) + [1]*len(sample_sig[:int(pct * len(bkg))]))
-    sample = sample.sample(frac=1)
+    sample_bkg = bkg.sample(frac=1, ignore_index=True)
+    sample_sig = globals()[signal].sample(frac=1, ignore_index=True)
+    sample = pd.concat([sample_bkg, sample_sig[:int(pct * len(bkg))]], ignore_index=True)
+    sample['labels'] = pd.Series([0]*len(sample_bkg) + [1]*len(sample[len(sample_bkg):]))
+    sample = sample.sample(frac=1, ignore_index=True)
 else:
     signal = "sig1"
     pct = 0
-    sample_bkg = bkg.sample(frac=1)
-    sample_sig = sig1.sample(frac=1)
+    sample_bkg = bkg.sample(frac=1, ignore_index=True)
+    sample_sig = sig1.sample(frac=1, ignore_index=True)
     sample = sample_bkg
     sample['labels'] = pd.Series([0]*len(sample))
 
@@ -77,7 +77,7 @@ mjj_sample = sample[mass].values
 # Print original S/B ratio
 labels = sample['labels']
 sbr = labels[labels==1].size / labels[labels==0].size
-print(f'Original S/B = {100 * sbr:.2f}%')
+print(f'Original S/B = {100 * sbr:.3f}%')
 
 
 #######################################################################################################
@@ -88,16 +88,17 @@ all_data = sample[selection]
 
 for col in smooth_cols:
     first_positive = all_data[col][all_data[col] > 0].min()
-    all_data[col] = np.where(all_data[col] <= 0, first_positive, all_data[col])
+    all_data.loc[all_data[col] <= 0, col] = first_positive
 
-all_data[smooth_cols] = all_data[smooth_cols].apply(lambda x: np.log(x))
+all_data.loc[:, smooth_cols] = all_data.loc[:, smooth_cols].apply(lambda x: np.log(x))
 
 # Create a Scaler object with adjusted parameters for each column
 scaler = StandardScaler()
 sample = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
 
 data = torch.from_numpy(sample[:100000].values).float().to(device)
-pt_mjj = torch.from_numpy(mjj_sample[:100000]).float().to(device)
+mjj = mjj_sample[:100000]
+labels = labels[:100000]
 
 #######################################################################################################
 ############################################# Analysis ################################################
@@ -118,17 +119,17 @@ with torch.no_grad(): # no need to compute gradients here
 loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=selection).mean(axis=1)
 
 # Do the selection at Nth percentile
-percentile = 85
+percentile = 90
 cut = np.percentile(loss_sample, percentile)
-mjj_sample_cut = mjj_sample[loss_sample > cut]
-print(f'    post cut stat : {mjj_sample_cut.size}')
+mjj_cut = mjj[loss_sample > cut]
+print(f'    post cut stat : {mjj_cut.size}')
 print(f'    selec threshold : {cut:.4f}')
 
 # Compute signal efficiency (based on truth) if possible
 labels_cut = labels[loss_sample > cut]
-sig_eff =  mjj_sample_cut[labels_cut == 1].size / mjj_sample[labels == 1].size
+sig_eff =  mjj_cut[labels_cut == 1].size / mjj[labels == 1].size
 print(f'    sig_eff : {sig_eff}')
-sbr = mjj_sample_cut[labels_cut == 1].size / mjj_sample_cut[labels_cut == 0].size
+sbr = mjj_cut[labels_cut == 1].size / mjj_cut[labels_cut == 0].size
 print(f'    new S/B : {100 * sbr:.2f}%')
 
 
@@ -137,8 +138,8 @@ print(f'    new S/B : {100 * sbr:.2f}%')
 
 BH = bh.BumpHunter1D(
     rang=scope,
-    width_min = 3,
-    width_max = 8,
+    width_min = 1,
+    width_max = 6,
     width_step = 1,
     scan_step = 1,
     npe = 40000,
@@ -150,13 +151,10 @@ BH = bh.BumpHunter1D(
 )
 
 # Do the BH scan
-BH.bump_scan(mjj_sample_cut, mjj_sample)
-print(BH.bump_info(mjj_sample_cut))
+BH.bump_scan(mjj_cut, mjj)
+print(BH.bump_info(mjj_cut))
 
 # Plot results
-BH.plot_tomography(mjj_sample, filename="figs/BumpHunter/tomography.png")
-BH.plot_bump(mjj_sample_cut, mjj_sample, filename="figs/BumpHunter/bump.png")
-BH.plot_stat(show_Pval=True, filename="figs/BumpHunter/BHstat.png")
-
-
-
+BH.plot_tomography(mjj, filename=f"figs/BumpHunter/tomography_{percentile}.png")
+BH.plot_bump(mjj_cut, mjj, filename=f"figs/BumpHunter/bump_{percentile}.png")
+BH.plot_stat(show_Pval=True, filename=f"figs/BumpHunter/BHstat_{percentile}.png")
