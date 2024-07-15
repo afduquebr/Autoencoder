@@ -127,7 +127,7 @@ model = AutoEncoder(input_dim = input_dim).to(device)
 N_epochs = 100
 batch_size = 2048
 learning_rate = 0.0002
-alpha = 100
+alpha = 0
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -157,7 +157,7 @@ for epoch in range(N_epochs) :
     sigLoss.append(test(model, testLoader_sig, loss_function, epoch))
 
 # Save model
-torch.save(model.state_dict(), f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth")
+torch.save(model.state_dict(), f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}_NODISCO.pth")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -166,7 +166,7 @@ axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Training',fontsize=14)
-fig.savefig(f"figs/training/train_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
+# fig.savefig(f"figs/training/train_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -176,4 +176,4 @@ axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Evaluation',fontsize=14)
-fig.savefig(f"figs/training/eval_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
+# fig.savefig(f"figs/training/eval_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
