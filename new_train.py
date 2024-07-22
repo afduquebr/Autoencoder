@@ -154,6 +154,7 @@ sigLoss = []
 
 # Run training and store validation through training
 for epoch in range(N_epochs) :
+    print(f"{epoch}")
     print("Training")
     trainLoss.append(train(model, trainLoader, WeightedMSELoss, optimizer, epoch, alpha))
     print("Validating")
