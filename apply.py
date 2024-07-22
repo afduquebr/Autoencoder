@@ -49,11 +49,6 @@ sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig2.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 bbox.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 
-bkg[["mass_1", "mass_2"]] = bkg[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
-sig1[["mass_1", "mass_2"]] = sig1[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
-sig2[["mass_1", "mass_2"]] = sig2[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
-bbox[["mass_1", "mass_2"]] = bbox[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
-
 mass = 'mj1j2'
 scope = [2700, 5000]
 
@@ -61,6 +56,20 @@ bkg = bkg[(bkg[mass] > scope[0]) & (bkg[mass] < scope[1])].reset_index()
 sig1 = sig1[(sig1[mass] > scope[0]) & (sig1[mass] < scope[1])].reset_index()
 sig2 = sig2[(sig2[mass] > scope[0]) & (sig2[mass] < scope[1])].reset_index()
 bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index()
+
+masses = ["mass_1", "mass_2"]
+
+bkg[masses] = bkg[masses].map(lambda x: max(x, 0))
+sig1[masses] = sig1[masses].map(lambda x: max(x, 0))
+sig2[masses] = sig2[masses].map(lambda x: max(x, 0))
+bbox[masses] = bbox[masses].map(lambda x: max(x, 0))
+
+tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
+
+bkg = bkg[(bkg[tau] >= 0).all(axis=1) & (bkg[tau] <= 1).all(axis=1)]
+sig1 = sig1[(sig1[tau] >= 0).all(axis=1) & (sig1[tau] <= 1).all(axis=1)]
+sig2 = sig2[(sig2[tau] >= 0).all(axis=1) & (sig2[tau] <= 1).all(axis=1)]
+bbox = bbox[(bbox[tau] >= 0).all(axis=1) & (bbox[tau] <= 1).all(axis=1)]
 
 # Mix signal or bbox with bkg
 
