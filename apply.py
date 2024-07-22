@@ -120,7 +120,7 @@ with torch.no_grad(): # no need to compute gradients here
 loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=selection).mean(axis=1)
 
 # Do the selection at Nth percentile
-percentile = 85
+percentile = 98
 cut = np.percentile(loss_sample, percentile)
 mjj_cut = mjj[loss_sample > cut]
 print(f'    post cut stat : {mjj_cut.size}')
@@ -154,15 +154,17 @@ BH = BumpHunter1D(
 # Do the BH scan
 BH.bump_scan(mjj_cut, mjj)
 
-if not os.path.exists(f"figs/BumpHunter2/{percentile}"):
-    os.makedirs(f"figs/BumpHunter2/{percentile}")
+folder = f"figs/BumpHunter/{percentile}"
 
-filename = f"figs/BumpHunter2/{percentile}/bump_info.txt"
+if not os.path.exists(folder):
+    os.makedirs(folder)
+
+filename = f"{folder}/bump_info.txt"
 with open(filename, "w") as file:
     # Write the content to the file
     file.write(BH.bump_info(mjj_cut))
 
 # Plot results
-BH.plot_tomography(mjj, filename=f"figs/BumpHunter2/{percentile}/tomography.png")
-BH.plot_bump(mjj_cut, mjj, filename=f"figs/BumpHunter2/{percentile}/bump.png")
-BH.plot_stat(show_Pval=True, filename=f"figs/BumpHunter2/{percentile}/BHstat.png")
+BH.plot_tomography(mjj, filename=f"{folder}/tomography.png")
+BH.plot_bump(mjj_cut, mjj, filename=f"{folder}/bump.png")
+BH.plot_stat(show_Pval=True, filename=f"{folder}/BHstat.png")
