@@ -47,6 +47,11 @@ sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 sig2.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 bbox.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 
+bkg[["mass_1", "mass_2"]] = bkg[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
+sig1[["mass_1", "mass_2"]] = sig1[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
+sig2[["mass_1", "mass_2"]] = sig2[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
+bbox[["mass_1", "mass_2"]] = bbox[["mass_1", "mass_2"]].map(lambda x: max(x, 0))
+
 mass = 'mj1j2'
 scope = [2700, 5000]
 
