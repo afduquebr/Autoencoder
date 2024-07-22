@@ -193,6 +193,10 @@ for th in threshold:
     hist_cut, _ = np.histogram(mjj_sample[:100000][loss_sample_total > th], bins=bins, range=scope)
     jsd.append(jensenshannon(hist_cut, hist_ref))
 
+
+df = pd.DataFrame(jsd)
+df.to_csv("figs/testing/jsd_DISCO_NOWEIGHTS.csv", index=False, header=False)
+
 # Plot JS Dist 
 fig, axes = plt.subplots(figsize=(8,6))
 axes.plot(np.arange(1, 100), jsd, '-', lw=1)
