@@ -51,24 +51,24 @@ bbox.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
 mass = 'mj1j2'
 scope = [2700, 5000]
 
-bkg = bkg[(bkg[mass] > scope[0]) & (bkg[mass] < scope[1])].reset_index()
-sig1 = sig1[(sig1[mass] > scope[0]) & (sig1[mass] < scope[1])].reset_index()
-sig2 = sig2[(sig2[mass] > scope[0]) & (sig2[mass] < scope[1])].reset_index()
-bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index()
+bkg = bkg[(bkg[mass] > scope[0]) & (bkg[mass] < scope[1])].reset_index(drop=1)
+sig1 = sig1[(sig1[mass] > scope[0]) & (sig1[mass] < scope[1])].reset_index(drop=1)
+sig2 = sig2[(sig2[mass] > scope[0]) & (sig2[mass] < scope[1])].reset_index(drop=1)
+bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index(drop=1)
 
 masses = ["mass_1", "mass_2"]
 
-bkg = bkg[(bkg[masses] >= 5.0).all(axis=1)].reset_index()
-sig1 = sig1[(sig1[masses] >= 5.0).all(axis=1)].reset_index()
-sig2 = sig2[(sig2[masses] >= 5.0).all(axis=1)].reset_index()
-bbox = bbox[(bbox[masses] >= 5.0).all(axis=1)].reset_index()
+bkg = bkg[(bkg[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
+sig1 = sig1[(sig1[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
+sig2 = sig2[(sig2[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
+bbox = bbox[(bbox[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
 
 tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
 
-bkg = bkg[(bkg[tau] >= 0).all(axis=1) & (bkg[tau] <= 1).all(axis=1)].reset_index()
-sig1 = sig1[(sig1[tau] >= 0).all(axis=1) & (sig1[tau] <= 1).all(axis=1)].reset_index()
-sig2 = sig2[(sig2[tau] >= 0).all(axis=1) & (sig2[tau] <= 1).all(axis=1)].reset_index()
-bbox = bbox[(bbox[tau] >= 0).all(axis=1) & (bbox[tau] <= 1).all(axis=1)].reset_index()
+bkg = bkg[(bkg[tau] >= 0).all(axis=1) & (bkg[tau] <= 1).all(axis=1)].reset_index(drop=1)
+sig1 = sig1[(sig1[tau] >= 0).all(axis=1) & (sig1[tau] <= 1).all(axis=1)].reset_index(drop=1)
+sig2 = sig2[(sig2[tau] >= 0).all(axis=1) & (sig2[tau] <= 1).all(axis=1)].reset_index(drop=1)
+bbox = bbox[(bbox[tau] >= 0).all(axis=1) & (bbox[tau] <= 1).all(axis=1)].reset_index(drop=1)
 
 # Mix signal or bbox with bkg
 
