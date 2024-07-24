@@ -9,14 +9,14 @@ Created on Jun 10 2024
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import roc_curve, auc
 from scipy.spatial.distance import jensenshannon
 
 import torch
 
 from autoencoder import AutoEncoder, loss
-from main import main, parse_args
+from preprocessing import Preprocessor
+from  main import parse_args
 
 ####################################### GPU or CPU running ###########################################
 
@@ -24,87 +24,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
 #######################################################################################################
-####################################### Data Initialization ###########################################
+####################################### Data Preprocessing ###########################################
 
-path, signal, pct = parse_args()
-main()
-
-if path == "local":
-    path = "../GAN-AE/clustering-lhco/data"
-elif path == "server": 
-    path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
-
-bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
-sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
-sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
-bbox = pd.read_hdf(f"{path}/BBOX1_2j_scalars_sig.h5")
-
-selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
-smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
-
-bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-sig2.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-bbox.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-
-mass = 'mj1j2'
-scope = [2700, 5000]
-
-bkg = bkg[(bkg[mass] > scope[0]) & (bkg[mass] < scope[1])].reset_index(drop=1)
-sig1 = sig1[(sig1[mass] > scope[0]) & (sig1[mass] < scope[1])].reset_index(drop=1)
-sig2 = sig2[(sig2[mass] > scope[0]) & (sig2[mass] < scope[1])].reset_index(drop=1)
-bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index(drop=1)
-
-masses = ["mass_1", "mass_2"]
-
-bkg = bkg[(bkg[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-sig1 = sig1[(sig1[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-sig2 = sig2[(sig2[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-bbox = bbox[(bbox[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-
-tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
-
-bkg = bkg[(bkg[tau] >= 0).all(axis=1) & (bkg[tau] <= 1).all(axis=1)].reset_index(drop=1)
-sig1 = sig1[(sig1[tau] >= 0).all(axis=1) & (sig1[tau] <= 1).all(axis=1)].reset_index(drop=1)
-sig2 = sig2[(sig2[tau] >= 0).all(axis=1) & (sig2[tau] <= 1).all(axis=1)].reset_index(drop=1)
-bbox = bbox[(bbox[tau] >= 0).all(axis=1) & (bbox[tau] <= 1).all(axis=1)].reset_index(drop=1)
-
-# Mix signal or bbox with bkg
-
-if signal != None:
-    sample_bkg = bkg.sample(frac=1)
-    sample_sig = globals()[signal].sample(frac=1)
-    sample = pd.concat([bkg, sample_sig[:int(pct * len(bkg))]]).sample(frac=1)
-else:
-    signal = "sig1"
-    pct = 0
-    sample_sig = sig1.sample(frac=1)
-    sample = bkg.sample(frac=1)
-
-mjj_sample = sample[mass].values
-mjj_bkg = sample_bkg[mass].values
-mjj_sig = sample_sig[mass].values
-
-#######################################################################################################
-######################################## Data Preprocessing ###########################################
-
-# Concatenate all datasets for the current column to find the global min and max
-all_data = pd.concat([sample[selection], sample_bkg[selection], sample_sig[selection]])
-
-for col in smooth_cols:
-    first_positive = all_data[col][all_data[col] > 0].min()
-    all_data.loc[all_data[col] <= 0, col] = first_positive
-
-all_data.loc[:, smooth_cols] = all_data.loc[:, smooth_cols].apply(lambda x: np.log(x))
-
-# Create a Scaler object with adjusted parameters for each column
-scaler = StandardScaler()
-data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
-
-# Apply scaling to each dataset per column
-sample_scaled = data_scaled.iloc[:len(sample)]
-bkg_scaled = data_scaled.iloc[len(sample):-len(sample_sig)]
-sig_scaled = data_scaled.iloc[-len(sample_sig):]
+_, signal, pct = parse_args()
+preprocessing = Preprocessor()
+sample_scaled, bkg_scaled, sig_scaled = preprocessing.get_scaled_data()
+weights_sample = preprocessing.get_weights()
+mjj_sample, mjj_bkg, mjj_sig = preprocessing.get_mass()
 
 #######################################################################################################
 ######################################### Data Rescaling ##############################################
@@ -112,13 +38,12 @@ sig_scaled = data_scaled.iloc[-len(sample_sig):]
 test_sample = torch.from_numpy(sample_scaled[:100000].values).float().to(device)
 test_bkg = torch.from_numpy(bkg_scaled[:100000].values).float().to(device)
 test_sig = torch.from_numpy(sig_scaled.values).float().to(device)
-# mjj = torch.from_numpy(mjj_sample[:100000]).float().to(device)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
 
 # Latent space dimension (embedding)
-input_dim = selection.size
+input_dim = preprocessing.selection.size
 
 # Load Model
 model = AutoEncoder(input_dim = input_dim).to(device)
@@ -134,9 +59,9 @@ with torch.no_grad(): # no need to compute gradients here
 # Determine Reconstruction Error
 
 # MSE per feature
-loss_sample = pd.DataFrame(loss(test_sample, predict_sample).numpy(), columns=selection)
-loss_bkg = pd.DataFrame(loss(test_bkg, predict_bkg).numpy(), columns=selection)
-loss_sig = pd.DataFrame(loss(test_sig, predict_sig).numpy(), columns=selection)
+loss_sample = pd.DataFrame(loss(test_sample, predict_sample).numpy(), columns=preprocessing.selection)
+loss_bkg = pd.DataFrame(loss(test_bkg, predict_bkg).numpy(), columns=preprocessing.selection)
+loss_sig = pd.DataFrame(loss(test_sig, predict_sig).numpy(), columns=preprocessing.selection)
 
 # Total MSE
 loss_sample_total = loss_sample.mean(axis=1)
@@ -199,6 +124,7 @@ fig.savefig(f"figs/testing/mass_dist_{signal}_{(int(pct * 1000) % 100):02d}.png"
 ############################################ Jensen Shannon Distribution  ##############################################
 
 # Reference uncut histogram
+scope = [2700, 5000]
 hist_ref, bins = np.histogram(mjj_sample[:100000], bins=30, range=scope)
 
 # Loop over percentiles
