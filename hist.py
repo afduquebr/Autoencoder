@@ -84,17 +84,6 @@ mjj_sample = sample[mass].values
 mjj_sig = sample_sig[mass].values
 
 #######################################################################################################
-############################################# Reweighting #############################################
-
-Hc,Hb = np.histogram(mjj_sample,bins=500)
-weights = np.array(Hc,dtype=float)
-weights[weights > 0.0] = 1.0 / weights[weights > 0.0]
-weights[weights == 0.0] = 1.0
-weights = np.append(weights, weights[-1])
-weights *= 1000.0 # To avoid very small weights
-weights = weights[np.searchsorted(Hb, mjj_sample)]
-
-#######################################################################################################
 ######################################## Data Preprocessing ###########################################
 
 # Concatenate all datasets for the current column to find the global min and max
@@ -119,8 +108,6 @@ sig_scaled = data_scaled.iloc[len(sample):]
 
 test_sample = torch.from_numpy(sample_scaled[:100000].values).float().to(device)
 test_sig = torch.from_numpy(sig_scaled.values).float().to(device)
-weights = torch.from_numpy(weights[:100000]).float().to(device)
-mjj = torch.from_numpy(mjj_sample[:100000]).float().to(device)
 
 #######################################################################################################
 ########################################## Testing Analysis ############################################
