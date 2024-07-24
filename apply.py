@@ -9,7 +9,6 @@ Created on Jul 05 2024
 import os
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler 
 from bumphunter_1dim import BumpHunter1D
 
 import torch
