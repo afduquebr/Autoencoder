@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from autoencoder import AutoEncoder, WeightedMSELoss, train, test
 from preprocessing import Preprocessor
+from  main import parse_args
 
 ####################################### GPU or CPU running ###########################################
 
@@ -26,6 +27,7 @@ print("Using device:", device)
 #######################################################################################################
 ####################################### Data Preprocessing ###########################################
 
+_, signal, pct = parse_args()
 preprocessing = Preprocessor()
 sample_scaled, _, sig_scaled = preprocessing.get_scaled_data()
 weights_sample = preprocessing.get_weights()
@@ -88,7 +90,7 @@ for epoch in range(N_epochs) :
     sigLoss.append(test(model, testLoader_sig, loss_function, epoch))
 
 # Save model
-torch.save(model.state_dict(), f"models/model_parameters_{preprocessing.signal}_{(int(preprocessing.pct * 1000) % 100):02d}.pth")
+torch.save(model.state_dict(), f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
@@ -97,14 +99,14 @@ axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Training',fontsize=14)
-fig.savefig(f"figs/training/train_loss_{preprocessing.signal}_{(int(preprocessing.pct * 1000) % 100):02d}.png")
+fig.savefig(f"figs/training/train_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 # Create Loss per Epochs
 fig, axes = plt.subplots(figsize=(8,6))
 axes.scatter(range(N_epochs), testLoss, marker="^", s=8, label='Test Sample')
-axes.scatter(range(N_epochs), sigLoss, marker="o", s=8, label='Signal: ' + preprocessing.signal)
+axes.scatter(range(N_epochs), sigLoss, marker="o", s=8, label='Signal: ' + signal)
 axes.set_xlabel('N epochs',fontsize=10)
 axes.set_ylabel('Loss',fontsize=10)
 axes.legend(loc='upper right',fontsize=10)
 axes.set_title('Loss during Evaluation',fontsize=14)
-fig.savefig(f"figs/training/eval_loss_{preprocessing.signal}_{(int(preprocessing.pct * 1000) % 100):02d}.png")
+fig.savefig(f"figs/training/eval_loss_{signal}_{(int(pct * 1000) % 100):02d}.png")
