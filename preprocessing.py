@@ -9,67 +9,63 @@ Created on Jul 23 2024
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-import torch
-from autoencoder import AutoEncoder, loss
 from main import main, parse_args
 
-class DataPreprocessor:
+
+class Preprocessor:
     def __init__(self):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print("Using device:", self.device)
         self.path, self.signal, self.pct = parse_args()
         main()
-        self.set_path()
         self.load_data()
-        self.clean_data()
-        self.filter_data()
-        self.mix_data()
-        self.reweight_data()
         self.preprocess_data()
-        
-    def set_path(self):
+        self.reweight_data()
+
+
+    def load_data(self):
         if self.path == "local":
             self.path = "../GAN-AE/clustering-lhco/data"
         elif self.path == "server": 
             self.path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
-            
-    def load_data(self):
+
+        
+        self.selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
+        self.smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
+        self.mass = 'mj1j2'
+        self.scope = [2700, 5000]
+        self.masses = ["mass_1", "mass_2"]
+        self.tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
+
         self.bkg = pd.read_hdf(f"{self.path}/RnD_2j_scalars_bkg.h5")
         self.sig1 = pd.read_hdf(f"{self.path}/RnD_2j_scalars_sig.h5")
         self.sig2 = pd.read_hdf(f"{self.path}/RnD2_2j_scalars_sig.h5")
         self.bbox = pd.read_hdf(f"{self.path}/BBOX1_2j_scalars_sig.h5")
-        self.selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
-        self.smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
-    
-    def clean_data(self):
+
+        # Handle missing or infinite values
         for df in [self.bkg, self.sig1, self.sig2, self.bbox]:
             df.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-    
-    def filter_data(self):
-        mass = 'mj1j2'
-        scope = [2700, 5000]
-        masses = ["mass_1", "mass_2"]
-        tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
-        
-        for df in [self.bkg, self.sig1, self.sig2, self.bbox]:
-            df = df[(df[mass] > scope[0]) & (df[mass] < scope[1])].reset_index()
-            df = df[(df[masses] >= 5.0).all(axis=1)].reset_index()
-            df = df[(df[tau] >= 0).all(axis=1) & (df[tau] <= 1).all(axis=1)].reset_index()
-    
-    def mix_data(self):
-        if self.signal is not None:
-            sample_bkg = self.bkg.sample(frac=1)
-            sample_sig = globals()[self.signal].sample(frac=1)
-            self.sample = pd.concat([self.bkg, sample_sig[:int(self.pct * len(self.bkg))]]).sample(frac=1)
+            df = df[(df[self.mass] > self.scope[0]) & (df[self.mass] < self.scope[1])].reset_index(drop=True)
+            df = df[(df[self.masses] >= 5.0).all(axis=1)].reset_index(drop=True)
+            df = df[(df[self.tau] >= 0).all(axis=1) & (df[self.tau] <= 1).all(axis=1)].reset_index(drop=True)
+
+    def mix_signal(self):
+        if self.signal:
+            self.sample_bkg = self.bkg.sample(frac=1, ignore_index=True)
+            self.sample_sig = getattr(self, self.signal).sample(frac=1, ignore_index=True)
+            sample = pd.concat([self.sample_bkg, self.sample_sig[:int(self.pct * len(self.bkg))]], ignore_index=True)
+            sample['labels'] = pd.Series([0]*len(self.sample_bkg) + [1]*len(sample[len(self.sample_bkg):]))
+            self.sample = sample.sample(frac=1, ignore_index=True)
         else:
             self.signal = "sig1"
             self.pct = 0
-            sample_sig = self.sig1.sample(frac=1)
-            self.sample = self.bkg.sample(frac=1)
-        
-        self.mjj_sample = self.sample['mj1j2'].values
-        self.mjj_bkg = sample_bkg['mj1j2'].values
-        self.mjj_sig = sample_sig['mj1j2'].values
+            self.sample_sig = self.sig1.sample(frac=1, ignore_index=True)
+            self.sample = self.bkg.sample(frac=1, ignore_index=True)
+            self.sample['labels'] = pd.Series([0]*len(self.sample))
+
+        self.mjj_sample = self.sample[self.mass].values
+        self.mjj_bkg = self.sample_bkg[self.mass].values
+        self.mjj_sig = self.sample_sig[self.mass].values
+
+        self.labels = self.sample['labels']
 
     def reweight_data(self):
         Hc, Hb = np.histogram(self.mjj_sample, bins=500)
@@ -80,19 +76,36 @@ class DataPreprocessor:
         weights *= 1000.0
         self.weights = weights[np.searchsorted(Hb, self.mjj_sample)]
 
+
     def preprocess_data(self):
-        all_data = pd.concat([self.sample[self.selection], self.bkg[self.selection], self.sig1[self.selection]])
+        self.mix_signal()
+        
+        # Concatenate all datasets for the current column to find the global min and max
+        all_data = pd.concat([self.sample[self.selection], self.sample_bkg[self.selection], self.sample_sig[self.selection]])
 
         for col in self.smooth_cols:
             first_positive = all_data[col][all_data[col] > 0].min()
             all_data.loc[all_data[col] <= 0, col] = first_positive
-        
+
         all_data.loc[:, self.smooth_cols] = all_data.loc[:, self.smooth_cols].apply(np.log)
+
+        # Create a Scaler object with adjusted parameters for each column
         scaler = StandardScaler()
         data_scaled = pd.DataFrame(scaler.fit_transform(all_data), columns=self.selection)
-        
-        self.sample_scaled = data_scaled.iloc[:len(self.sample)]
-        self.bkg_scaled = data_scaled.iloc[len(self.sample):-len(self.sig1)]
-        self.sig_scaled = data_scaled.iloc[-len(self.sig1):]
 
+        # Apply scaling to each dataset per column
+        self.sample_scaled = data_scaled.iloc[:len(self.sample)].reset_index(drop=True)
+        self.bkg_scaled = data_scaled.iloc[len(self.sample):-len(self.sample_sig)].reset_index(drop=True)
+        self.sig_scaled = data_scaled.iloc[-len(self.sample_sig):].reset_index(drop=True)
 
+    def get_scaled_data(self):
+        return self.sample_scaled, self.bkg_scaled, self.sig_scaled
+    
+    def get_mass(self):
+        return self.mjj_sample, self.mjj_bkg, self.mjj_sig
+    
+    def get_weights(self):
+        return self.weights
+    
+    def get_labels(self):
+        return self.labels
