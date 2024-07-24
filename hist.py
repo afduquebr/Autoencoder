@@ -6,9 +6,9 @@ Created on Jun 10 2024
 """
 #######################################################################################################
 
+import os
 import matplotlib.pyplot as plt
 import torch
-import os
 
 from autoencoder import AutoEncoder
 from preprocessing import Preprocessor
