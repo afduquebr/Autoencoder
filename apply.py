@@ -8,17 +8,15 @@ Created on Jul 05 2024
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import StandardScaler 
-from sklearn.metrics import roc_curve, auc
-from scipy.spatial.distance import jensenshannon
 from bumphunter_1dim import BumpHunter1D
 
 import torch
 
 from autoencoder import AutoEncoder, loss
-from main import main, parse_args
+from preprocessing import Preprocessor
+from main import parse_args
 
 ####################################### GPU or CPU running ###########################################
 
@@ -26,92 +24,22 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
 #######################################################################################################
-####################################### Data Initialization ###########################################
+####################################### Data Preprocessing ###########################################
 
-path, signal, pct = parse_args()
-main()
+_, signal, pct = parse_args()
+preprocessing = Preprocessor()
+sample_scaled, bkg_scaled, sig_scaled = preprocessing.get_scaled_data()
+weights_sample = preprocessing.get_weights()
+mjj_sample, mjj_bkg, mjj_sig = preprocessing.get_mass()
+labels = preprocessing.get_labels()
 
-if path == "local":
-    path = "../GAN-AE/clustering-lhco/data"
-elif path == "server": 
-    path = "/AtlasDisk/user/duquebran/clustering-lhco/data"
-
-bkg = pd.read_hdf(f"{path}/RnD_2j_scalars_bkg.h5")
-sig1 = pd.read_hdf(f"{path}/RnD_2j_scalars_sig.h5")
-sig2 = pd.read_hdf(f"{path}/RnD2_2j_scalars_sig.h5")
-bbox = pd.read_hdf(f"{path}/BBOX1_2j_scalars_sig.h5")
-
-selection = pd.read_csv("dijet-selection.csv", header=None).values[:, 0]
-smooth_cols = pd.read_csv("scale-selection.csv", header=None).values[:, 0]
-
-bkg.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-sig1.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-sig2.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-bbox.replace([np.nan, -np.inf, np.inf], 0, inplace=True)
-
-mass = 'mj1j2'
-scope = [2700, 5000]
-
-bkg = bkg[(bkg[mass] > scope[0]) & (bkg[mass] < scope[1])].reset_index(drop=1)
-sig1 = sig1[(sig1[mass] > scope[0]) & (sig1[mass] < scope[1])].reset_index(drop=1)
-sig2 = sig2[(sig2[mass] > scope[0]) & (sig2[mass] < scope[1])].reset_index(drop=1)
-bbox = bbox[(bbox[mass] > scope[0]) & (bbox[mass] < scope[1])].reset_index(drop=1)
-
-masses = ["mass_1", "mass_2"]
-
-bkg = bkg[(bkg[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-sig1 = sig1[(sig1[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-sig2 = sig2[(sig2[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-bbox = bbox[(bbox[masses] >= 5.0).all(axis=1)].reset_index(drop=1)
-
-tau = ["tau21_1", "tau21_2", "tau32_1", "tau32_2"]
-
-bkg = bkg[(bkg[tau] >= 0).all(axis=1) & (bkg[tau] <= 1).all(axis=1)].reset_index(drop=1)
-sig1 = sig1[(sig1[tau] >= 0).all(axis=1) & (sig1[tau] <= 1).all(axis=1)].reset_index(drop=1)
-sig2 = sig2[(sig2[tau] >= 0).all(axis=1) & (sig2[tau] <= 1).all(axis=1)].reset_index(drop=1)
-bbox = bbox[(bbox[tau] >= 0).all(axis=1) & (bbox[tau] <= 1).all(axis=1)].reset_index(drop=1)
-
-# Mix signal or bbox with bkg
-
-if signal != None:
-    sample_bkg = bkg.sample(frac=1, ignore_index=True)
-    sample_sig = globals()[signal].sample(frac=1, ignore_index=True)
-    sample = pd.concat([sample_bkg, sample_sig[:int(pct * len(bkg))]], ignore_index=True)
-    sample['labels'] = pd.Series([0]*len(sample_bkg) + [1]*len(sample[len(sample_bkg):]))
-    sample = sample.sample(frac=1, ignore_index=True)
-else:
-    signal = "sig1"
-    pct = 0
-    sample_bkg = bkg.sample(frac=1, ignore_index=True)
-    sample_sig = sig1.sample(frac=1, ignore_index=True)
-    sample = sample_bkg
-    sample['labels'] = pd.Series([0]*len(sample))
-
-mjj_sample = sample[mass].values
-
-# Print original S/B ratio
-labels = sample['labels']
 sbr = labels[labels==1].size / labels[labels==0].size
 print(f'Original S/B = {100 * sbr:.3f}%')
-
 
 #######################################################################################################
 ######################################## Data Preprocessing ###########################################
 
-# Concatenate all datasets for the current column to find the global min and max
-all_data = sample[selection]
-
-for col in smooth_cols:
-    first_positive = all_data[col][all_data[col] > 0].min()
-    all_data.loc[all_data[col] <= 0, col] = first_positive
-
-all_data.loc[:, smooth_cols] = all_data.loc[:, smooth_cols].apply(lambda x: np.log(x))
-
-# Create a Scaler object with adjusted parameters for each column
-scaler = StandardScaler()
-sample = pd.DataFrame(scaler.fit_transform(all_data), columns=selection)
-
-data = torch.from_numpy(sample[:100000].values).float().to(device)
+data = torch.from_numpy(sample_scaled[:100000].values).float().to(device)
 mjj = mjj_sample[:100000]
 labels = labels[:100000]
 
@@ -119,7 +47,7 @@ labels = labels[:100000]
 ############################################# Analysis ################################################
 
 # Latent space dimension (embedding)
-input_dim = selection.size
+input_dim = preprocessing.selection.size
 
 # Load Model
 model = AutoEncoder(input_dim = input_dim).to(device)
@@ -131,7 +59,7 @@ with torch.no_grad(): # no need to compute gradients here
     prediction = model(data)
 
 # MSE 
-loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=selection).mean(axis=1)
+loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=preprocessing.selection).mean(axis=1)
 
 # Do the selection at Nth percentile
 percentile = 98
@@ -152,7 +80,7 @@ print(f'    new S/B : {100 * sbr:.2f}%')
 ############################################# Analysis ################################################
 
 BH = BumpHunter1D(
-    rang=scope,
+    rang=(2700, 5000),
     width_min = 3,
     width_max = 6,
     width_step = 1,
