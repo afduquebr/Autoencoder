@@ -71,12 +71,12 @@ loss_sig_total = loss_sig.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 40
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_sample_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Data'], stacked=True, alpha=1)
-axes.hist([loss_bkg_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Background'], stacked=True, alpha=0.9)
-axes.hist([loss_sig_total], nbins, range=(0, 1.5), density=1, histtype='step', label=['Signal'], stacked=True, alpha=0.8)
+axes.hist([loss_sample_total], nbins, range=(0, 2), density=1, histtype='step', label=['Data'], stacked=True, alpha=1)
+axes.hist([loss_bkg_total], nbins, range=(0, 2), density=1, histtype='step', label=['Background'], stacked=True, alpha=0.9)
+axes.hist([loss_sig_total], nbins, range=(0, 2), density=1, histtype='step', label=['Signal'], stacked=True, alpha=0.8)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0, 1.5)
+axes.set_xlim(0, 2)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
@@ -113,8 +113,8 @@ threshold = np.percentile(loss_sample_total, np.arange(1, 100))
 nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=0.6)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[70 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['70%'], stacked=True, alpha=0.8)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=1)
+# axes.hist([mjj_sample[:100000][loss_sample_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=1)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[98 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['98%'], stacked=True, alpha=0.8)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -135,7 +135,7 @@ for th in threshold:
 
 
 df = pd.DataFrame(jsd)
-df.to_csv("figs/testing/jsd_DISCO_NOWEIGHTS.csv", index=False, header=False)
+df.to_csv("figs/testing/Jensen Shannon Distance/jsd.csv", index=False, header=False)
 
 # Plot JS Dist 
 fig, axes = plt.subplots(figsize=(8,6))
