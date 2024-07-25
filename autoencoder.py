@@ -30,7 +30,7 @@ class AutoEncoder(nn.Module):
             nn.Linear(input_dim, mid_dim),
             nn.ReLU(),
             nn.Linear(mid_dim, latent_dim),
-            nn.ReLU()
+            # nn.ReLU()
         )
         
         # Building an linear decoder with Linear
@@ -88,7 +88,7 @@ def train(model, data_loader, loss_function, opt, epoch, alpha=0):
         prediction = model(features)
         error = torch.mean(loss(features, prediction), dim=1)
         disco = distance_corr(mass, error, torch.ones_like(mass))
-        train_loss = loss_function(prediction, features, torch.ones_like(weights)) + alpha * disco
+        train_loss = loss_function(prediction, features, weights) + alpha * disco
         opt.zero_grad()
         train_loss.backward()
         opt.step()
