@@ -30,7 +30,7 @@ class AutoEncoder(nn.Module):
             nn.Linear(input_dim, mid_dim),
             nn.ReLU(),
             nn.Linear(mid_dim, latent_dim),
-            # nn.ReLU()
+            nn.ReLU()
         )
         
         # Building an linear decoder with Linear
