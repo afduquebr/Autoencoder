@@ -80,7 +80,7 @@ print(f'    new S/B : {100 * sbr:.2f}%')
 
 BH = BumpHunter1D(
     rang=(2700, 5000),
-    width_min = 3,
+    width_min = 1,
     width_max = 6,
     width_step = 1,
     scan_step = 1,
