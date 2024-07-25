@@ -114,7 +114,7 @@ nbins = 30
 fig, axes = plt.subplots(figsize=(8,6))
 axes.hist([mjj_sample[:100000]], nbins, range=(2700, 5000), density=1, histtype='step', label=['No selection'], stacked=True, alpha=0.6)
 # axes.hist([mjj_sample[:100000][loss_sample_total > threshold[85 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['85%'], stacked=True, alpha=1)
-axes.hist([mjj_sample[:100000][loss_sample_total > threshold[98 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['98%'], stacked=True, alpha=0.8)
+axes.hist([mjj_sample[:100000][loss_sample_total > threshold[90 - 1]]], nbins, range=(2700, 5000), density=1, histtype='step', label=['90%'], stacked=True, alpha=0.8)
 axes.set_xlabel(r"$m_{jet_1•jet_2}$ [GeV]")
 axes.set_ylabel("Events")
 axes.set_xlim(2700, 5000)
@@ -135,7 +135,7 @@ for th in threshold:
 
 
 df = pd.DataFrame(jsd)
-df.to_csv("figs/testing/Jensen Shannon Distance/jsd.csv", index=False, header=False)
+df.to_csv(f"figs/testing/Jensen Shannon/jsd.csv", index=False, header=False)
 
 # Plot JS Dist 
 fig, axes = plt.subplots(figsize=(8,6))
