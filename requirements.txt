@@ -1,8 +1,11 @@
+# Other dependencies
 matplotlib==3.8.3
 numpy==1.26.4
 pandas==2.2.1
-pyBumpHunter==0.4.2
 scikit-learn==1.4.0
 tables==3.9.2
 torch==2.2.0
 torchvision==0.17
+
+# Dependency from a GitHub repository
+git+https://github.com/afduquebr/pyBumpHunter.git

@@ -9,7 +9,7 @@ Created on Jul 05 2024
 import os
 import numpy as np
 import pandas as pd
-from bumphunter_1dim import BumpHunter1D
+import pyBumpHunter as bh
 
 import torch
 
@@ -78,7 +78,7 @@ print(f'    new S/B : {100 * sbr:.2f}%')
 #######################################################################################################
 ############################################# Analysis ################################################
 
-BH = BumpHunter1D(
+BH = bh.BumpHunter1D(
     rang=(2700, 5000),
     width_min = 1,
     width_max = 6,
