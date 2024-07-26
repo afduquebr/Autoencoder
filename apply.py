@@ -61,7 +61,7 @@ with torch.no_grad(): # no need to compute gradients here
 loss_sample = pd.DataFrame(loss(data, prediction).numpy(), columns=preprocessing.selection).mean(axis=1)
 
 # Do the selection at Nth percentile
-percentile = 98
+percentile = 95
 cut = np.percentile(loss_sample, percentile)
 mjj_cut = mjj[loss_sample > cut]
 print(f'    post cut stat : {mjj_cut.size}')
