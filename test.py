@@ -71,17 +71,49 @@ loss_sig_total = loss_sig.mean(axis=1)
 # Plot Total Reconstruction Error
 nbins = 40
 fig, axes = plt.subplots(figsize=(8,6))
-axes.hist([loss_sample_total], nbins, range=(0, 0.7), density=1, histtype='step', label=['Data'], stacked=True, alpha=1)
-axes.hist([loss_bkg_total], nbins, range=(0, 0.7), density=1, histtype='step', label=['Background'], stacked=True, alpha=0.9)
-axes.hist([loss_sig_total], nbins, range=(0, 0.7), density=1, histtype='step', label=['Signal'], stacked=True, alpha=0.8)
+axes.hist([loss_sample_total], nbins, range=(0, 2), density=1, histtype='step', label=['Data'], stacked=True, alpha=1)
+axes.hist([loss_bkg_total], nbins, range=(0, 2), density=1, histtype='step', label=['Background'], stacked=True, alpha=0.9)
+axes.hist([loss_sig_total], nbins, range=(0, 2), density=1, histtype='step', label=['Signal'], stacked=True, alpha=0.8)
 axes.set_xlabel(r"Reconstruction Error")
 axes.set_ylabel("Events")
-axes.set_xlim(0, 0.7)
+axes.set_xlim(0, 2)
 axes.legend(loc='upper right')
 fig.savefig(f"figs/testing/reconstruction_error_{signal}_{(int(pct * 1000) % 100):02d}.png")
 
 ############################################ ROC Curve ##############################################
 
+# TEMP
+####################################################################
+# Load Model
+model2 = AutoEncoder(input_dim = input_dim).to(device)
+model2.load_state_dict(torch.load(f"models/model2_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
+model2.eval()
+
+# Predictions
+with torch.no_grad(): # no need to compute gradients here
+    predict2_sample = model2(test_sample)
+    predict2_bkg = model2(test_bkg)
+    predict2_sig = model2(test_sig)
+
+# Determine Reconstruction Error
+
+# MSE per feature
+loss2_sample = pd.DataFrame(loss(test_sample, predict2_sample).numpy(), columns=preprocessing.selection)
+loss2_bkg = pd.DataFrame(loss(test_bkg, predict2_bkg).numpy(), columns=preprocessing.selection)
+loss2_sig = pd.DataFrame(loss(test_sig, predict2_sig).numpy(), columns=preprocessing.selection)
+
+# Total MSE
+loss2_sample_total = loss_sample.mean(axis=1)
+loss2_bkg_total = loss_bkg.mean(axis=1)
+loss2_sig_total = loss_sig.mean(axis=1)
+
+loss2_total = pd.concat([loss2_bkg_total, loss2_sig_total], axis=0, ignore_index=1)
+labels2 = pd.Series([0]*len(loss2_bkg_total) + [1]*len(loss2_sig_total))
+loss2_total = pd.DataFrame({'Loss': loss2_total, 'Label': labels2})
+
+fpr2, tpr2, thresholds2 = roc_curve(loss2_total["Label"], loss2_total["Loss"])
+roc_auc2 = auc(fpr2, tpr2)
+######################################################
 
 loss_total = pd.concat([loss_bkg_total, loss_sig_total], axis=0, ignore_index=1)
 labels = pd.Series([0]*len(loss_bkg_total) + [1]*len(loss_sig_total))
@@ -93,8 +125,10 @@ roc_auc = auc(fpr, tpr)
 
 # Plot ROC curve
 fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(fpr, tpr, lw=2, label='Signal ROC curve (AUC = %0.2f)' % roc_auc)
+# axes.plot(fpr, tpr, lw=2, label='Signal ROC curve (AUC = %0.2f)' % roc_auc)
+axes.plot(fpr, tpr, lw=2, label='First Training (AUC = %0.2f)' % roc_auc)
 axes.plot([0, 1], [0, 1], lw=2, linestyle='--')
+axes.plot(fpr2, tpr2, lw=2, label='Full Training (AUC = %0.2f)' % roc_auc2)
 axes.set_xlim([0.0, 1.0])
 axes.set_ylim([0.0, 1.05])
 axes.set_xlabel('Signal Efficiency')
