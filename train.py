@@ -60,9 +60,9 @@ learning_rate = 0.0002
 alpha = 50
 
 # dataloaders
-trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=4)
-testLoader = DataLoader(testSet, batch_size=batch_size, shuffle=True, num_workers=4)
-testLoader_sig = DataLoader(testSet_sig, batch_size=batch_size, shuffle=True, num_workers=4)
+trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=0)
+testLoader = DataLoader(testSet, batch_size=batch_size, shuffle=True, num_workers=0)
+testLoader_sig = DataLoader(testSet_sig, batch_size=batch_size, shuffle=True, num_workers=0)
 
 # Loss function
 loss_function = nn.MSELoss()
