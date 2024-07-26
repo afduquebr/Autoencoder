@@ -143,7 +143,7 @@ testSet_sig = TensorDataset(test_sig, test_sig)
 N_epochs = 100
 batch_size = 2048
 learning_rate = 0.0002
-alpha = 0
+alpha = 100
 
 # dataloaders
 trainLoader = DataLoader(trainSet, batch_size=batch_size, shuffle=True, num_workers=4)
