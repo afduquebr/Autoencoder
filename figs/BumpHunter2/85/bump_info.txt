@@ -1,7 +1,0 @@
-Bump edges : [2.93e+03, 3.1e+03]  (loc=4, width=3)
-Bump mean | width : 3.02e+03 | 172
-Evaluated number of signal events : 26.5
-Local p-value | test statistic : 0.2969 | 1.2144
-Local significance : 0.53334
-Global p-value : 0.99987
-Global significance : -3.66
