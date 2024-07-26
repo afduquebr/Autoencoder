@@ -95,7 +95,7 @@ BH = BumpHunter1D(
 # Do the BH scan
 BH.bump_scan(mjj_cut, mjj)
 
-folder = f"figs/BumpHunter/{percentile}"
+folder = "figs/BumpHunter"
 
 if not os.path.exists(folder):
     os.makedirs(folder)
