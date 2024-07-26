@@ -9,8 +9,8 @@ Created on Jun 10 2024
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import roc_curve, auc
-from scipy.spatial.distance import jensenshannon
+from sklearn.metrics import roc_curve, auc 
+from scipy.spatial.distance import jensenshannon 
 
 import torch
 
@@ -47,7 +47,7 @@ input_dim = preprocessing.selection.size
 
 # Load Model
 model = AutoEncoder(input_dim = input_dim).to(device)
-model.load_state_dict(torch.load(f"models/model_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/model2_parameters_{signal}_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
 model.eval()
 
 # Predictions
