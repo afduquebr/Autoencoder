@@ -2133,7 +2133,7 @@ class BumpHunter1D:
         """
 
         # Chek if we have multi-channel
-        if self.res_ar != [] and self.res_ar.ndim == 2:
+        if self.res_ar.size > 0 and self.res_ar.ndim == 2:
             # We have multiple channels
             multi_chan = True
         else:
