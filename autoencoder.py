@@ -8,40 +8,34 @@ Created on Mar 25 2024
 
 import torch
 import torch.nn as nn
-
 from Disco import distance_corr
 
 ####################################### GPU or CPU running ###########################################
 
+# Select the device for computation (GPU if available, else CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #######################################################################################################
 ######################################### AutoEncoder Class ###########################################
 
-# Creating a PyTorch class
-# 42 ==> 84 ==> 14 ==> 84 ==> 42
+# Define the AutoEncoder class
 class AutoEncoder(nn.Module):
     def __init__(self, input_dim = 42, mid_dim = 21, latent_dim = 14):
         super(AutoEncoder, self).__init__()
-        # Building an linear encoder with Linear
-        # layer followed by ReLU activation function
-        # 42 ==> 14
+        # Define the encoder part of the autoencoder
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, mid_dim),
-            nn.ReLU(),
-            nn.Linear(mid_dim, latent_dim),
-            nn.ReLU()
+            nn.Linear(input_dim, mid_dim), # Linear layer from input to middle dimension
+            nn.ReLU(),                     # ReLU activation function
+            nn.Linear(mid_dim, latent_dim),# Linear layer from middle to latent dimension
+            nn.ReLU()                      # ReLU activation function
         )
         
-        # Building an linear decoder with Linear
-        # layer followed by ReLU activation function
-        # 14 ==> 42
+        # Define the decoder part of the autoencoder
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, mid_dim),
-            nn.ReLU(),
-            nn.Linear(mid_dim, input_dim),
-            # nn.ReLU() # MinMax Scaling 
-            nn.PReLU() # Standard Scaling
+            nn.Linear(latent_dim, mid_dim),# Linear layer from latent to middle dimension
+            nn.ReLU(),                     # ReLU activation function
+            nn.Linear(mid_dim, input_dim), # Linear layer from middle to input dimension
+            nn.PReLU()                     # PReLU activation function
         )
 
         # Initialize decoder weights with encoder weights
@@ -55,65 +49,73 @@ class AutoEncoder(nn.Module):
                 # Assign encoder's weights to decoder's weights
                 decoder_layer.weight.data = encoder_layer.weight.data.clone().t()
 
-
     def encode(self, x):
+        # Forward pass through the encoder
         x = self.encoder(x)
         return x
             
     def decode(self, x):
+        # Forward pass through the decoder
         x = self.decoder(x)
         return x
 
     def forward(self, x):
+        # Forward pass through the entire autoencoder
         x = self.encode(x)
-        x = self.decode(x) 
+        x = self.decode(x)
+        # Re-apply the constraint on the weights
         self.constrain_weights()
         return x
 
 #######################################################################################################
 ########################################### Weighted Loss #############################################
 
+# Define a function for weighted mean squared error loss
 def WeightedMSELoss(output, target, weight):
+    # Calculate the weighted MSE loss
     loss_MSE = torch.mean(weight.unsqueeze(1) * (output - target)**2)
     return loss_MSE
 
 #######################################################################################################
 ########################################## Model Training #############################################
 
+# Define the training function
 def train(model, data_loader, loss_function, opt, epoch, alpha=0):
-    model.train()
-    for i, (features, weights, mass) in enumerate(data_loader): 
-        features = features.to(device)
-        mass = mass.to(device)
-        prediction = model(features)
-        error = torch.mean(loss(features, prediction), dim=1)
-        disco = distance_corr(mass, error, torch.ones_like(mass))
-        train_loss = loss_function(prediction, features, weights) + alpha * disco
-        opt.zero_grad()
-        train_loss.backward()
-        opt.step()
+    model.train() # Set the model to training mode
+    for i, (features, weights, mass) in enumerate(data_loader):
+        features = features.to(device) # Move features to the device
+        mass = mass.to(device)         # Move mass to the device
+        prediction = model(features)   # Get the model's predictions
+        error = torch.mean(loss(features, prediction), dim=1) # Calculate reconstruction error
+        disco = distance_corr(mass, error, torch.ones_like(mass)) # Calculate distance correlation
+        train_loss = loss_function(prediction, features, weights) + alpha * disco # Total loss
+        opt.zero_grad() # Zero the gradients
+        train_loss.backward() # Backpropagate the error
+        opt.step() # Update the model parameters
 
-        # print statistics
-        if i % 100 == 99:    
-            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Training loss: %.3f'% (train_loss.item()))
+        # Print statistics every 10 batches
+        if i % 10 == 9:    
+            print('[Epoch : %d, iteration: %5d]' % (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
+            print('Training loss: %.3f' % (train_loss.item()))
     return train_loss.item()
 
 #######################################################################################################
 ##################################### Model Testing and Loss ##########################################
 
+# Define the testing function
 def test(model, data_loader, loss_function, epoch):
-    model.eval()
+    model.eval() # Set the model to evaluation mode
     for i, (features, _) in enumerate(data_loader):     
-        features = features.to(device) 
-        prediction = model(features)
-        test_loss = loss_function(prediction, features)
-        # print statistics
-        if i % 100 == 99:    
-            print('[Epoch : %d, iteration: %5d]'% (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
-            print('Testing loss: %.3f'% (test_loss.item()))
+        features = features.to(device) # Move features to the device
+        prediction = model(features)   # Get the model's predictions
+        test_loss = loss_function(prediction, features) # Calculate the test loss
+        # Print statistics every 10 batches
+        if i % 10 == 9:    
+            print('[Epoch : %d, iteration: %5d]' % (epoch + 1, (i + 1) + epoch * len(data_loader.dataset)))
+            print('Testing loss: %.3f' % (test_loss.item()))
     return test_loss.item()
 
 # Define Reconstruction Error function
 def loss(output, target):
+    # Calculate the squared difference between output and target
     return torch.pow(output - target, 2)
