@@ -15,7 +15,7 @@ from main import main, parse_args
 class Preprocessor:
     def __init__(self):
         # Parse command line arguments and call main function
-        self.path, self.signal, self.pct = parse_args()
+        self.signal, self.pct = parse_args()
         main()
         # Load and preprocess data
         self.load_data()

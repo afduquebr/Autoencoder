@@ -2,22 +2,17 @@ import getopt
 import sys
 
 def parse_args():
-    path = None
     dataset = None
     anomaly = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "p:d:a:", ["path=", "dataset=", "anomaly="])
+        opts, args = getopt.getopt(sys.argv[1:], "d:a:", ["dataset=", "anomaly="])
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
 
     for opt, arg in opts:
-        if opt in ("-p", "--path"):
-            if arg not in ["local", "server", None]:
-                raise ValueError("Path must be either 'local' or 'server'.")
-            path = arg
-        elif opt in ("-d", "--dataset"):
+        if opt in ("-d", "--dataset"):
             if arg not in ["sig1", "sig2", "bbox", None]:
                 raise ValueError("Dataset must be either 'sig1', 'sig2' or 'bbox'.")
             dataset = arg
@@ -28,17 +23,14 @@ def parse_args():
                 except ValueError:
                     raise ValueError("Anomaly percentage must be between 0 and 0.1.")
 
-    if path == None:
-        raise ValueError("Path option is required")
     if anomaly == None and dataset != None:
         raise ValueError("Anomaly percentage option is required")
 
-    return path, dataset, anomaly
+    return dataset, anomaly
 
 def main():
     try:
-        path, dataset, anomaly = parse_args()
-        print("Path: ", path)
+        dataset, anomaly = parse_args()
         print("Signal Dataset: ", dataset)
         print("Anomaly percentage: ", anomaly)
     except ValueError as err:
