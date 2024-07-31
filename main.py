@@ -13,8 +13,8 @@ def parse_args():
 
     for opt, arg in opts:
         if opt in ("-d", "--dataset"):
-            if arg not in ["sig1", "sig2", "bbox", None]:
-                raise ValueError("Dataset must be either 'sig1', 'sig2' or 'bbox'.")
+            if arg not in ["sig", "bbox1", "bbox2", None]:
+                raise ValueError("Dataset must be either 'sig', 'bbox1' or 'bbox2'.")
             dataset = arg
         elif opt in ("-a", "--anomaly"):
             if arg != None:
