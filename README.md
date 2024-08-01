@@ -17,8 +17,6 @@ This repository contains a collection of scripts and modules for preprocessing, 
   - [Model Training and Testing](#model-training-and-testing)
   - [BumpHunter Analysis](#bumphunter-analysis)
 - [Repository Structure](#repository-structure)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
