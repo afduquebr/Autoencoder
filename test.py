@@ -145,48 +145,48 @@ for th in threshold:
     jsd.append(jensenshannon(hist_cut, hist_ref))
 
 # Plot Jensen-Shannon Divergence
-fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(np.arange(1, 100), jsd, '-', lw=1)
-axes.set_xlabel('Percentile Cut')
-axes.set_ylabel('JS Distance')
-fig.savefig(f"{folder}/jd_dist.png")
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.plot(np.arange(1, 100), jsd, '-', lw=1)
+# axes.set_xlabel('Percentile Cut')
+# axes.set_ylabel('JS Distance')
+# fig.savefig(f"{folder}/jd_dist.png")
 
 ################################################ Mean Loss per Feature #################################################
 
 # Plot Mean Reconstruction Error per Feature
-fig, axes = plt.subplots(figsize=(8,6))
-axes.bar(range(loss_sample.columns.size), loss_sample.mean().values)
-axes.set_xlabel("Features")
-axes.set_ylabel("Reconstruction Error")
-axes.set_yscale("log")
-fig.savefig(f"{folder}/reconstruction_error_features.png")
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.bar(range(loss_sample.columns.size), loss_sample.mean().values)
+# axes.set_xlabel("Features")
+# axes.set_ylabel("Reconstruction Error")
+# axes.set_yscale("log")
+# fig.savefig(f"{folder}/reconstruction_error_features.png")
 
 ############################################### Mass vs Loss Distribution ##############################################
 
-# Calculate average reconstruction error per mass bin
-_, bins = np.histogram(mjj_sample[:100000], bins=50, range=(2700, 5000))
-loss_sample_avg = []
-loss_bkg_avg = []
-loss_sig_avg = []
+# # Calculate average reconstruction error per mass bin
+# _, bins = np.histogram(mjj_sample[:100000], bins=50, range=(2700, 5000))
+# loss_sample_avg = []
+# loss_bkg_avg = []
+# loss_sig_avg = []
 
-for i in range(len(bins) - 1):
-    # Get the mean loss for each bin
-    loss_sample_bin = loss_sample_total[(mjj_sample[:100000] >= bins[i]) & (mjj_sample[:100000] < bins[i + 1])]
-    loss_bkg_bin = loss_bkg_total[(mjj_bkg[:100000] >= bins[i]) & (mjj_bkg[:100000] < bins[i + 1])]
-    loss_sig_bin = loss_sig_total[(mjj_sig >= bins[i]) & (mjj_sig < bins[i + 1])]
+# for i in range(len(bins) - 1):
+#     # Get the mean loss for each bin
+#     loss_sample_bin = loss_sample_total[(mjj_sample[:100000] >= bins[i]) & (mjj_sample[:100000] < bins[i + 1])]
+#     loss_bkg_bin = loss_bkg_total[(mjj_bkg[:100000] >= bins[i]) & (mjj_bkg[:100000] < bins[i + 1])]
+#     loss_sig_bin = loss_sig_total[(mjj_sig >= bins[i]) & (mjj_sig < bins[i + 1])]
 
-    loss_sample_avg.append(np.mean(loss_sample_bin))
-    loss_bkg_avg.append(np.mean(loss_bkg_bin))
-    loss_sig_avg.append(np.mean(loss_sig_bin))
+#     loss_sample_avg.append(np.mean(loss_sample_bin))
+#     loss_bkg_avg.append(np.mean(loss_bkg_bin))
+#     loss_sig_avg.append(np.mean(loss_sig_bin))
 
-# Plot Average Loss vs. Mass Distribution
-fig, axes = plt.subplots(figsize=(8,6))
-axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sample_avg, label='Data')
-axes.plot(bins[:-1] + np.diff(bins) / 2, loss_bkg_avg, label='Background')
-axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig_avg, label='Signal')
-axes.set_xlim([2700, 5000])
-axes.set_xlabel(r"$m_{jet_1\cdot jet_2}$")
-axes.set_ylabel('Reconstruction Error')
-axes.set_title('Avg Error vs. Mass Distribution')
-axes.legend()
-fig.savefig(f"{folder}/AvgLossMass.png")
+# # Plot Average Loss vs. Mass Distribution
+# fig, axes = plt.subplots(figsize=(8,6))
+# axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sample_avg, label='Data')
+# axes.plot(bins[:-1] + np.diff(bins) / 2, loss_bkg_avg, label='Background')
+# axes.plot(bins[:-1] + np.diff(bins) / 2, loss_sig_avg, label='Signal')
+# axes.set_xlim([2700, 5000])
+# axes.set_xlabel(r"$m_{jet_1\cdot jet_2}$")
+# axes.set_ylabel('Reconstruction Error')
+# axes.set_title('Avg Error vs. Mass Distribution')
+# axes.legend()
+# fig.savefig(f"{folder}/AvgLossMass.png")
