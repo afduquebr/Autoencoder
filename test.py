@@ -57,7 +57,7 @@ input_dim = preprocessing.selection.size
 
 # Load pre-trained AutoEncoder model
 model = AutoEncoder(input_dim=input_dim).to(device)
-model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 10) % 100):02d}.pth", map_location=device))
 model.eval()
 
 # Make predictions using the model
@@ -77,7 +77,7 @@ loss_bkg_total = loss_bkg.mean(axis=1)
 loss_sig_total = loss_sig.mean(axis=1)
 
 # Create directory for saving figures
-folder = f"figs/{signal}/{(int(pct * 1000) % 100):02d}/testing"
+folder = f"figs/{signal}/{(int(pct * 10) % 100):02d}/testing"
 if not os.path.exists(folder):
     os.makedirs(folder)
 

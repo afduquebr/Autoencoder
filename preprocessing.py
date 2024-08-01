@@ -56,7 +56,7 @@ class Preprocessor:
         if self.signal:
             self.sample_bkg = self.bkg.sample(frac=1, ignore_index=True)
             self.sample_sig = getattr(self, self.signal).sample(frac=1, ignore_index=True)
-            sample = pd.concat([self.sample_bkg, self.sample_sig[:int(self.pct * len(self.bkg))]], ignore_index=True)
+            sample = pd.concat([self.sample_bkg, self.sample_sig[:int(self.pct * len(self.bkg) / 100)]], ignore_index=True)
             sample['labels'] = pd.Series([0]*len(self.sample_bkg) + [1]*len(sample[len(self.sample_bkg):]))
             self.sample = sample.sample(frac=1, ignore_index=True)
         else:

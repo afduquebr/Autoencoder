@@ -60,7 +60,7 @@ input_dim = preprocessing.selection.size
 
 # Load the pre-trained AutoEncoder model
 model = AutoEncoder(input_dim=input_dim).to(device)
-model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 10) % 100):02d}.pth", map_location=device))
 model.eval()
 
 # Perform predictions using the model
@@ -106,7 +106,7 @@ BH = bh.BumpHunter1D(
 BH.bump_scan(mjj_cut, mjj)
 
 # Create directory for saving BumpHunter results
-folder = f"figs/{signal}/{(int(pct * 1000) % 100):02d}/BumpHunter"
+folder = f"figs/{signal}/{(int(pct * 10) % 100):02d}/BumpHunter"
 if not os.path.exists(folder):
     os.makedirs(folder)
 

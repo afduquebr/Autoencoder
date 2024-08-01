@@ -101,9 +101,9 @@ folder = f"models/{signal}"
 if not os.path.exists(folder):
     os.makedirs(folder)
 
-torch.save(model.state_dict(), f"{folder}/parameters_{(int(pct * 1000) % 100):02d}.pth")
+torch.save(model.state_dict(), f"{folder}/parameters_{(int(pct * 10) % 100):02d}.pth")
 
-folder = f"figs/{signal}/{(int(pct * 1000) % 100):02d}/training"
+folder = f"figs/{signal}/{(int(pct * 10) % 100):02d}/training"
 if not os.path.exists(folder):
     os.makedirs(folder)
 

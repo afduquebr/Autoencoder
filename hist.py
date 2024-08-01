@@ -45,7 +45,7 @@ input_dim = preprocessing.selection.size
 
 # Load the trained AutoEncoder model
 model = AutoEncoder(input_dim=input_dim).to(device)
-model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 1000) % 100):02d}.pth", map_location=device))
+model.load_state_dict(torch.load(f"models/{signal}/parameters_{(int(pct * 10) % 100):02d}.pth", map_location=device))
 model.eval()  # Set the model to evaluation mode
 
 # Make predictions without calculating gradients
@@ -57,7 +57,7 @@ with torch.no_grad():
 ############################################# Histograms ##############################################
 
 # Create directory for storing histogram plots
-directory = f"figs/histograms/{signal}/{(int(pct * 1000) % 100):02d}"
+directory = f"figs/histograms/{signal}/{(int(pct * 10) % 100):02d}"
 
 if not os.path.exists(directory):
     os.makedirs(directory)
